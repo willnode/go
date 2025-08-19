@@ -39,9 +39,9 @@ func pthread_attr_init(attr *pthread_attr_t) int32
 //go:noescape
 func pthread_attr_setdetachstate(attr *pthread_attr_t, state int32) int32
 //go:noescape
-func pthread_attr_setstack(attr *pthread_attr_t, addr unsafe.Pointer, size uintptr) int32
+func pthread_attr_setstack(attr *pthread_attr_t, addr uintptr, size uintptr) int32
 //go:noescape
-func pthread_create(tid *pthread_t, attr *pthread_attr_t, start unsafe.Pointer, arg unsafe.Pointer) int32
+func pthread_create(tid *pthread_t, attr *pthread_attr_t, start uintptr, arg unsafe.Pointer) int32
 //go:noescape
 func pthread_self() pthread_t
 //go:noescape
@@ -61,23 +61,6 @@ func pthread_cond_timedwait(c *pthread_cond_t, m *pthread_mutex_t, ts *timespec)
 //go:noescape
 func pthread_cond_signal(c *pthread_cond_t) int32
 
-// Standard error and clock constants.
-const (
-	_ESRCH     = 3
-	_ETIMEDOUT = 60
-	_EAGAIN    = 35
-
-	_CLOCK_REALTIME  = 0
-	_CLOCK_MONOTONIC = 3
-
-	_TIMER_RELTIME = 0
-	_TIMER_ABSTIME = 1
-
-	_PTHREAD_CREATE_DETACHED = 1
-
-	_SC_NPROCESSORS_ONLN = 58
-	_SC_PAGESIZE         = 30
-)
 
 var sigset_all = sigset{[4]uint32{^uint32(0), ^uint32(0), ^uint32(0), ^uint32(0)}}
 

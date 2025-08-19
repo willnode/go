@@ -1,5 +1,14 @@
 package runtime
 
+import (
+	"unsafe"
+)
+
+const (
+	_si_max_size    = 128
+	_sigev_max_size = 64
+)
+
 const (
 	_O_RDONLY   = 0x0
 	_O_WRONLY   = 0x1
@@ -19,6 +28,37 @@ const (
 	_SI_USER     = 0
 	_UC_SIGMASK  = 0x01
 	_UC_CPU      = 0x04
+
+	_EINTR  = 0x4
+	_EAGAIN = 0xb
+	_ENOMEM = 0xc
+
+	_PROT_NONE  = 0x0
+	_PROT_READ  = 0x1
+	_PROT_WRITE = 0x2
+	_PROT_EXEC  = 0x4
+
+	_MAP_ANON    = 0x20
+	_MAP_PRIVATE = 0x2
+	_MAP_FIXED   = 0x10
+
+	_SI_KERNEL = 0x80
+	_SI_TIMER  = -0x2
+
+	_MADV_DONTNEED   = 0x4
+	_MADV_FREE       = 0x8
+	_MADV_HUGEPAGE   = 0xe
+	_MADV_NOHUGEPAGE = 0xf
+	_MADV_COLLAPSE   = 0x19
+
+	_FPE_INTDIV = 0x1
+	_FPE_INTOVF = 0x2
+	_FPE_FLTDIV = 0x3
+	_FPE_FLTOVF = 0x4
+	_FPE_FLTUND = 0x5
+	_FPE_FLTRES = 0x6
+	_FPE_FLTINV = 0x7
+	_FPE_FLTSUB = 0x8
 
 	_SIGHUP    = 0x1
 	_SIGINT    = 0x2
@@ -51,8 +91,27 @@ const (
 	_SIGINFO   = 0x1d
 	_SIGUSR1   = 0x1e
 	_SIGUSR2   = 0x1f
+
+	_SA_RESTART  = 0x10000000
+	_SA_ONSTACK  = 0x8000000
+	_SA_RESTORER = 0x4000000
+	_SA_SIGINFO  = 0x4
 )
 
+// Standard error and clock constants.
+const (
+
+	_CLOCK_REALTIME  = 0
+	_CLOCK_MONOTONIC = 3
+
+	_TIMER_RELTIME = 0
+	_TIMER_ABSTIME = 1
+
+	_PTHREAD_CREATE_DETACHED = 1
+
+	_SC_NPROCESSORS_ONLN = 58
+	_SC_PAGESIZE         = 30
+)
 
 //
 // C-like types defined in Go for syscalls.
