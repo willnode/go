@@ -145,7 +145,7 @@ func BuildModeSupported(compiler, buildmode, goos, goarch string) bool {
 
 	case "c-archive":
 		switch goos {
-		case "aix", "darwin", "ios", "windows":
+		case "aix", "darwin", "ios", "redox", "windows":
 			return true
 		case "linux":
 			switch goarch {
@@ -173,6 +173,7 @@ func BuildModeSupported(compiler, buildmode, goos, goarch string) bool {
 			"android/amd64", "android/arm", "android/arm64", "android/386",
 			"freebsd/amd64",
 			"darwin/amd64", "darwin/arm64",
+			"redox/amd64", "redox/arm64",
 			"windows/amd64", "windows/386", "windows/arm64",
 			"wasip1/wasm":
 			return true
@@ -194,6 +195,7 @@ func BuildModeSupported(compiler, buildmode, goos, goarch string) bool {
 			"ios/amd64", "ios/arm64",
 			"aix/ppc64",
 			"openbsd/arm64",
+			"redox/386", "redox/amd64", "redox/arm64", "redox/riscv64",
 			"windows/386", "windows/amd64", "windows/arm64":
 			return true
 		}
@@ -226,6 +228,7 @@ func InternalLinkPIESupported(goos, goarch string) bool {
 	case "android/arm64",
 		"darwin/amd64", "darwin/arm64",
 		"linux/amd64", "linux/arm64", "linux/loong64", "linux/ppc64le",
+		"redox/386","redox/amd64","redox/arm64",
 		"windows/386", "windows/amd64", "windows/arm64":
 		return true
 	}
@@ -237,7 +240,7 @@ func InternalLinkPIESupported(goos, goarch string) bool {
 // so force the caller to pass that in to centralize that choice.
 func DefaultPIE(goos, goarch string, isRace bool) bool {
 	switch goos {
-	case "android", "ios":
+	case "android", "ios", "redox":
 		return true
 	case "windows":
 		if isRace {

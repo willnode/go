@@ -197,6 +197,7 @@ var (
 type ELFArch struct {
 	// TODO: Document these fields.
 
+	Redoxdynld     string
 	Androiddynld   string
 	Linuxdynld     string
 	LinuxdynldMusl string
@@ -1936,6 +1937,11 @@ func asmbElf(ctxt *Link) {
 			case objabi.Hlinux:
 				if buildcfg.GOOS == "android" {
 					interpreter = thearch.ELF.Androiddynld
+					if interpreter == "" {
+						Exitf("ELF interpreter not set")
+					}
+				} else if buildcfg.GOOS == "redox" {
+					interpreter = thearch.ELF.Redoxdynld
 					if interpreter == "" {
 						Exitf("ELF interpreter not set")
 					}
