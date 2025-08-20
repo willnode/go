@@ -144,16 +144,6 @@ func isGroupMember(gid int) bool {
 	return slices.Contains(groups, gid)
 }
 
-func isCapDacOverrideSet() bool {
-	const _CAP_DAC_OVERRIDE = 1
-	var c caps
-	c.hdr.version = _LINUX_CAPABILITY_VERSION_3
-
-	_, _, err := RawSyscall(SYS_CAPGET, uintptr(unsafe.Pointer(&c.hdr)), uintptr(unsafe.Pointer(&c.data[0])), 0)
-
-	return err == 0 && c.data[0].effective&capToMask(_CAP_DAC_OVERRIDE) != 0
-}
-
 //sys	faccessat(dirfd int, path string, mode uint32) (err error)
 //sys	faccessat2(dirfd int, path string, mode uint32, flags int) (err error) = _SYS_faccessat2
 
@@ -199,12 +189,6 @@ func Faccessat(dirfd int, path string, mode uint32, flags int) (err error) {
 	var uid int
 	if flags&_AT_EACCESS != 0 {
 		uid = Geteuid()
-		if uid != 0 && isCapDacOverrideSet() {
-			// If CAP_DAC_OVERRIDE is set, file access check is
-			// done by the kernel in the same way as for root
-			// (see generic_permission() in the Linux sources).
-			uid = 0
-		}
 	} else {
 		uid = Getuid()
 	}
@@ -423,34 +407,8 @@ func Getgroups() (gids []int, err error) {
 var cgo_libc_setgroups unsafe.Pointer // non-nil if cgo linked.
 
 func Setgroups(gids []int) (err error) {
-	n := uintptr(len(gids))
-	if n == 0 {
-		if cgo_libc_setgroups == nil {
-			if _, _, e1 := AllThreadsSyscall(_SYS_setgroups, 0, 0, 0); e1 != 0 {
-				err = errnoErr(e1)
-			}
-			return
-		}
-		if ret := cgocaller(cgo_libc_setgroups, 0, 0); ret != 0 {
-			err = errnoErr(Errno(ret))
-		}
-		return
-	}
-
-	a := make([]_Gid_t, len(gids))
-	for i, v := range gids {
-		a[i] = _Gid_t(v)
-	}
-	if cgo_libc_setgroups == nil {
-		if _, _, e1 := AllThreadsSyscall(_SYS_setgroups, n, uintptr(unsafe.Pointer(&a[0])), 0); e1 != 0 {
-			err = errnoErr(e1)
-		}
-		return
-	}
-	if ret := cgocaller(cgo_libc_setgroups, n, uintptr(unsafe.Pointer(&a[0]))); ret != 0 {
-		err = errnoErr(Errno(ret))
-	}
-	return
+	// todo setgroups
+	return ENOENT
 }
 
 type WaitStatus uint32
@@ -1156,105 +1114,57 @@ var cgo_libc_setegid unsafe.Pointer // non-nil if cgo linked.
 const minus1 = ^uintptr(0)
 
 func Setegid(egid int) (err error) {
-	if cgo_libc_setegid == nil {
-		if _, _, e1 := AllThreadsSyscall(SYS_SETRESGID, minus1, uintptr(egid), minus1); e1 != 0 {
-			err = errnoErr(e1)
-		}
-	} else if ret := cgocaller(cgo_libc_setegid, uintptr(egid)); ret != 0 {
-		err = errnoErr(Errno(ret))
-	}
-	return
+	// TODO
+	return nil
 }
 
 var cgo_libc_seteuid unsafe.Pointer // non-nil if cgo linked.
 
 func Seteuid(euid int) (err error) {
-	if cgo_libc_seteuid == nil {
-		if _, _, e1 := AllThreadsSyscall(SYS_SETRESUID, minus1, uintptr(euid), minus1); e1 != 0 {
-			err = errnoErr(e1)
-		}
-	} else if ret := cgocaller(cgo_libc_seteuid, uintptr(euid)); ret != 0 {
-		err = errnoErr(Errno(ret))
-	}
-	return
+	// TODO
+	return nil
 }
 
 var cgo_libc_setgid unsafe.Pointer // non-nil if cgo linked.
 
 func Setgid(gid int) (err error) {
-	if cgo_libc_setgid == nil {
-		if _, _, e1 := AllThreadsSyscall(sys_SETGID, uintptr(gid), 0, 0); e1 != 0 {
-			err = errnoErr(e1)
-		}
-	} else if ret := cgocaller(cgo_libc_setgid, uintptr(gid)); ret != 0 {
-		err = errnoErr(Errno(ret))
-	}
-	return
+	// TODO
+	return nil
 }
 
 var cgo_libc_setregid unsafe.Pointer // non-nil if cgo linked.
 
 func Setregid(rgid, egid int) (err error) {
-	if cgo_libc_setregid == nil {
-		if _, _, e1 := AllThreadsSyscall(sys_SETREGID, uintptr(rgid), uintptr(egid), 0); e1 != 0 {
-			err = errnoErr(e1)
-		}
-	} else if ret := cgocaller(cgo_libc_setregid, uintptr(rgid), uintptr(egid)); ret != 0 {
-		err = errnoErr(Errno(ret))
-	}
-	return
+	// TODO
+	return nil
 }
 
 var cgo_libc_setresgid unsafe.Pointer // non-nil if cgo linked.
 
 func Setresgid(rgid, egid, sgid int) (err error) {
-	if cgo_libc_setresgid == nil {
-		if _, _, e1 := AllThreadsSyscall(sys_SETRESGID, uintptr(rgid), uintptr(egid), uintptr(sgid)); e1 != 0 {
-			err = errnoErr(e1)
-		}
-	} else if ret := cgocaller(cgo_libc_setresgid, uintptr(rgid), uintptr(egid), uintptr(sgid)); ret != 0 {
-		err = errnoErr(Errno(ret))
-	}
-	return
+	// TODO
+	return nil
 }
 
 var cgo_libc_setresuid unsafe.Pointer // non-nil if cgo linked.
 
 func Setresuid(ruid, euid, suid int) (err error) {
-	if cgo_libc_setresuid == nil {
-		if _, _, e1 := AllThreadsSyscall(sys_SETRESUID, uintptr(ruid), uintptr(euid), uintptr(suid)); e1 != 0 {
-			err = errnoErr(e1)
-		}
-	} else if ret := cgocaller(cgo_libc_setresuid, uintptr(ruid), uintptr(euid), uintptr(suid)); ret != 0 {
-		err = errnoErr(Errno(ret))
-	}
-	return
+	// TODO
+	return nil
 }
 
 var cgo_libc_setreuid unsafe.Pointer // non-nil if cgo linked.
 
 func Setreuid(ruid, euid int) (err error) {
-	if cgo_libc_setreuid == nil {
-		if _, _, e1 := AllThreadsSyscall(sys_SETREUID, uintptr(ruid), uintptr(euid), 0); e1 != 0 {
-			err = errnoErr(e1)
-		}
-	} else if ret := cgocaller(cgo_libc_setreuid, uintptr(ruid), uintptr(euid)); ret != 0 {
-		err = errnoErr(Errno(ret))
-	}
-	return
+	// TODO
+	return nil
 }
 
 var cgo_libc_setuid unsafe.Pointer // non-nil if cgo linked.
 
 func Setuid(uid int) (err error) {
-	if cgo_libc_setuid == nil {
-		if _, _, e1 := AllThreadsSyscall(sys_SETUID, uintptr(uid), 0, 0); e1 != 0 {
-			err = errnoErr(e1)
-		}
-	} else if ret := cgocaller(cgo_libc_setuid, uintptr(uid)); ret != 0 {
-		err = errnoErr(Errno(ret))
-	}
-	return
+	// TODO
+	return nil
 }
 
 //sys	Setpriority(which int, who int, prio int) (err error)

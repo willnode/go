@@ -105,7 +105,6 @@ type Stat_t struct {
 	Mode      uint32
 	Uid       uint32
 	Gid       uint32
-	X__pad0   int32
 	Rdev      uint64
 	Size      int64
 	Blksize   int64
