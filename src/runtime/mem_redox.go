@@ -156,7 +156,7 @@ func sysFreeOS(v unsafe.Pointer, n uintptr) {
 }
 
 func sysFaultOS(v unsafe.Pointer, n uintptr) {
-	mprotect(v, n, _PROT_NONE)
+//	mprotect(v, n, _PROT_NONE)
 	madvise(v, n, _MADV_DONTNEED)
 }
 

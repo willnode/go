@@ -19,6 +19,12 @@ import (
 	"unsafe"
 )
 
+
+// Constant expected by package but not supported
+const (
+	_F_DUP2FD_CLOEXEC = 0
+)
+
 // Pull in entersyscall/exitsyscall for Syscall/Syscall6.
 //
 // Note that this can't be a push linkname because the runtime already has a

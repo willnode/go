@@ -29,22 +29,6 @@ const (
 	_UC_SIGMASK  = 0x01
 	_UC_CPU      = 0x04
 
-	_EINTR  = 0x4
-	_EAGAIN = 0xb
-	_ENOMEM = 0xc
-
-	_PROT_NONE  = 0x0
-	_PROT_READ  = 0x1
-	_PROT_WRITE = 0x2
-	_PROT_EXEC  = 0x4
-
-	_MAP_ANON    = 0x20
-	_MAP_PRIVATE = 0x2
-	_MAP_FIXED   = 0x10
-
-	_SI_KERNEL = 0x80
-	_SI_TIMER  = -0x2
-
 	_MADV_DONTNEED   = 0x4
 	_MADV_FREE       = 0x8
 	_MADV_HUGEPAGE   = 0xe
@@ -141,39 +125,6 @@ type sigset struct {
 	__bits [4]uint32 // Supports up to 128 signals.
 }
 
-// For sigaltstack.
-type stackt struct {
-	ss_sp    uintptr
-	ss_flags int32
-	ss_size  uintptr
-}
-
-// For setitimer.
-type timeval struct {
-	tv_sec  int64
-	tv_usec int64
-}
-type itimerval struct {
-	it_interval timeval
-	it_value    timeval
-}
-
-type sigctxt struct {
-	info *siginfo
-	ctxt unsafe.Pointer
-}
-
-
-type timespec struct {
-	tv_sec  int32
-	tv_nsec int32
-}
-
-//go:nosplit
-func (ts *timespec) setNsec(ns int64) {
-	ts.tv_sec = timediv(ns, 1e9, &ts.tv_nsec)
-}
-
 type siginfoFields struct {
 	si_signo int32
 	si_errno int32
@@ -194,4 +145,212 @@ type mOS struct {
 	waitsemacount uint32
 	waitsemamutex pthread_mutex_t
 	waitsemacond  pthread_cond_t
+}
+
+const (
+	_EINTR  = 0x4
+	_EAGAIN = 0xb
+	_ENOMEM = 0xc
+	_ESRCH     = 3
+	_ETIMEDOUT = 60
+
+
+	_PROT_NONE  = 0x0
+	_PROT_READ  = 0x1
+	_PROT_WRITE = 0x2
+	_PROT_EXEC  = 0x4
+
+	_MAP_ANON    = 0x20
+	_MAP_PRIVATE = 0x2
+	_MAP_FIXED   = 0x10
+
+	_SI_KERNEL = 0x80
+	_SI_TIMER  = -0x2
+
+	_SIGRTMIN = 0x20
+
+	_BUS_ADRALN = 0x1
+	_BUS_ADRERR = 0x2
+	_BUS_OBJERR = 0x3
+
+	_SEGV_MAPERR = 0x1
+	_SEGV_ACCERR = 0x2
+
+	_ITIMER_REAL    = 0x0
+	_ITIMER_VIRTUAL = 0x1
+	_ITIMER_PROF    = 0x2
+
+	_CLOCK_THREAD_CPUTIME_ID = 0x3
+
+	_SIGEV_THREAD_ID = 0x4
+
+	_AF_UNIX    = 0x1
+	_SOCK_DGRAM = 0x2
+)
+
+type timespec struct {
+	tv_sec  int64
+	tv_nsec int64 // 32 bit is int32
+}
+
+//go:nosplit
+func (ts *timespec) setNsec(ns int64) {
+	ts.tv_sec = ns / 1e9
+	ts.tv_nsec = ns % 1e9
+}
+
+type timeval struct {
+	tv_sec  int64
+	tv_usec int64
+}
+
+func (tv *timeval) set_usec(x int32) {
+	tv.tv_usec = int64(x)
+}
+
+type sigactiont struct {
+	sa_sigaction uintptr
+	sa_mask      sigset
+	sa_flags     int32
+}
+
+type itimerspec struct {
+	it_interval timespec
+	it_value    timespec
+}
+
+type itimerval struct {
+	it_interval timeval
+	it_value    timeval
+}
+
+type sigeventFields struct {
+	value  uintptr
+	signo  int32
+	notify int32
+	// below here is a union; sigev_notify_thread_id is the only field we use
+	sigev_notify_thread_id int32
+}
+
+type sigevent struct {
+	sigeventFields
+
+	// Pad struct to the max size in the kernel.
+	_ [_sigev_max_size - unsafe.Sizeof(sigeventFields{})]byte
+}
+
+
+type usigset struct {
+	__val [16]uint64
+}
+
+type fpxreg struct {
+	significand [4]uint16
+	exponent    uint16
+	padding     [3]uint16
+}
+
+type xmmreg struct {
+	element [4]uint32
+}
+
+type fpstate struct {
+	cwd       uint16
+	swd       uint16
+	ftw       uint16
+	fop       uint16
+	rip       uint64
+	rdp       uint64
+	mxcsr     uint32
+	mxcr_mask uint32
+	_st       [8]fpxreg
+	_xmm      [16]xmmreg
+	padding   [24]uint32
+}
+
+type fpxreg1 struct {
+	significand [4]uint16
+	exponent    uint16
+	padding     [3]uint16
+}
+
+type xmmreg1 struct {
+	element [4]uint32
+}
+
+type fpstate1 struct {
+	cwd       uint16
+	swd       uint16
+	ftw       uint16
+	fop       uint16
+	rip       uint64
+	rdp       uint64
+	mxcsr     uint32
+	mxcr_mask uint32
+	_st       [8]fpxreg1
+	_xmm      [16]xmmreg1
+	padding   [24]uint32
+}
+
+type fpreg1 struct {
+	significand [4]uint16
+	exponent    uint16
+}
+
+type stackt struct {
+	ss_sp     uintptr
+	ss_flags  int32
+	pad_cgo_0 [4]byte
+	ss_size   uintptr
+}
+
+type mcontext struct {
+	gregs       [23]uint64
+	fpregs      *fpstate
+	__reserved1 [8]uint64
+}
+
+type ucontext struct {
+	uc_flags     uint64
+	uc_link      *ucontext
+	uc_stack     stackt
+	uc_mcontext  mcontext
+	uc_sigmask   usigset
+	__fpregs_mem fpstate
+}
+
+type sigcontext struct {
+	r8          uint64
+	r9          uint64
+	r10         uint64
+	r11         uint64
+	r12         uint64
+	r13         uint64
+	r14         uint64
+	r15         uint64
+	rdi         uint64
+	rsi         uint64
+	rbp         uint64
+	rbx         uint64
+	rdx         uint64
+	rax         uint64
+	rcx         uint64
+	rsp         uint64
+	rip         uint64
+	eflags      uint64
+	cs          uint16
+	gs          uint16
+	fs          uint16
+	__pad0      uint16
+	err         uint64
+	trapno      uint64
+	oldmask     uint64
+	cr2         uint64
+	fpstate     *fpstate1
+	__reserved1 [8]uint64
+}
+
+type sockaddr_un struct {
+	family uint16
+	path   [108]byte
 }

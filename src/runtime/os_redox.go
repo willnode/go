@@ -6,7 +6,6 @@ package runtime
 
 import (
 	"internal/abi"
-	"internal/goarch"
 	"internal/runtime/atomic"
 	"unsafe"
 )
@@ -154,21 +153,23 @@ func newosproc(mp *m) {
 		throw("pthread_attr_setdetachstate failed")
 	}
 
-	var oset sigset
-	sigprocmask(_SIG_SETMASK, &sigset_all, &oset)
+	throw("todo runtime.newosproc")
 
-	var tid pthread_t
-	ret := pthread_create(&tid, &attr, abi.FuncPCABI0(threadentry), unsafe.Pointer(mp))
+	// var oset sigset
+	// sigprocmask(_SIG_SETMASK, &sigset_all, &oset)
 
-	sigprocmask(_SIG_SETMASK, &oset, nil)
+	// var tid pthread_t
+	// ret := pthread_create(&tid, &attr, abi.FuncPCABI0(threadentry), unsafe.Pointer(mp))
 
-	if ret != 0 {
-		print("runtime: failed to create new OS thread (have ", mcount()-1, " already; errno=", ret, ")\n")
-		if ret == _EAGAIN {
-			println("runtime: may need to increase max user processes (ulimit -u)")
-		}
-		throw("runtime.newosproc")
-	}
+	// sigprocmask(_SIG_SETMASK, &oset, nil)
+
+	// if ret != 0 {
+	// 	print("runtime: failed to create new OS thread (have ", mcount()-1, " already; errno=", ret, ")\n")
+	// 	if ret == _EAGAIN {
+	// 		println("runtime: may need to increase max user processes (ulimit -u)")
+	// 	}
+	// 	throw("runtime.newosproc")
+	// }
 }
 
 func osinit() {
@@ -218,13 +219,7 @@ func mdestroy(mp *m) {
 // Signal handling
 //
 
-func sigtramp()
-
-type sigactiont struct {
-	sa_sigaction uintptr
-	sa_mask      sigset
-	sa_flags     int32
-}
+// func sigtramp()
 
 //go:nosplit
 //go:nowritebarrierrec
@@ -233,7 +228,8 @@ func setsig(i uint32, fn uintptr) {
 	sa.sa_flags = _SA_SIGINFO | _SA_ONSTACK | _SA_RESTART
 	sa.sa_mask = sigset_all
 	if fn == abi.FuncPCABIInternal(sighandler) {
-		fn = abi.FuncPCABI0(sigtramp)
+		// fn = abi.FuncPCABI0(sigtramp)
+		throw("todo sigtramp")
 	}
 	sa.sa_sigaction = fn
 	sigaction(i, &sa, nil)
@@ -273,6 +269,11 @@ func sigdelset(mask *sigset, i int) {
 	}
 	mask.__bits[(i-1)/32] &^= 1 << ((uint32(i) - 1) & 31)
 }
+
+func raiseproc(sig uint32) /* int32 */ {
+	// todo
+}
+
 
 //go:nosplit
 func (c *sigctxt) fixsigcode(sig uint32) {
