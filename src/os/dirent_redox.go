@@ -19,12 +19,15 @@ func direntIno(buf []byte) (uint64, bool) {
 }
 
 func direntReclen(buf []byte) (uint64, bool) {
-	namelen, ok := direntNamlen(buf)
-	return sizeOfDirent + namelen, ok
+	return readInt(buf, unsafe.Offsetof(syscall.Dirent{}.Reclen), unsafe.Sizeof(syscall.Dirent{}.Reclen))
 }
 
 func direntNamlen(buf []byte) (uint64, bool) {
-	return readInt(buf, unsafe.Offsetof(syscall.Dirent{}.Namlen), unsafe.Sizeof(syscall.Dirent{}.Namlen))
+	reclen, ok := direntReclen(buf)
+	if !ok {
+		return 0, false
+	}
+	return reclen - uint64(unsafe.Offsetof(syscall.Dirent{}.Name)), true
 }
 
 func direntType(buf []byte) FileMode {
@@ -32,21 +35,22 @@ func direntType(buf []byte) FileMode {
 	if off >= uintptr(len(buf)) {
 		return ^FileMode(0) // unknown
 	}
-	switch syscall.Filetype(buf[off]) {
-	case syscall.FILETYPE_BLOCK_DEVICE:
+	typ := buf[off]
+	switch typ {
+	case syscall.DT_BLK:
 		return ModeDevice
-	case syscall.FILETYPE_CHARACTER_DEVICE:
+	case syscall.DT_CHR:
 		return ModeDevice | ModeCharDevice
-	case syscall.FILETYPE_DIRECTORY:
+	case syscall.DT_DIR:
 		return ModeDir
-	case syscall.FILETYPE_REGULAR_FILE:
-		return 0
-	case syscall.FILETYPE_SOCKET_DGRAM:
-		return ModeSocket
-	case syscall.FILETYPE_SOCKET_STREAM:
-		return ModeSocket
-	case syscall.FILETYPE_SYMBOLIC_LINK:
+	case syscall.DT_FIFO:
+		return ModeNamedPipe
+	case syscall.DT_LNK:
 		return ModeSymlink
+	case syscall.DT_REG:
+		return 0
+	case syscall.DT_SOCK:
+		return ModeSocket
 	}
 	return ^FileMode(0) // unknown
 }

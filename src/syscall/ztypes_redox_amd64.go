@@ -136,7 +136,6 @@ type Dirent struct {
 	Reclen    uint16
 	Type      uint8
 	Name      [256]int8
-	Pad_cgo_0 [5]byte
 }
 
 type Fsid struct {

@@ -13,7 +13,7 @@ const (
 	mkdiratTrap    uintptr = syscall.SYS_MKDIRAT
 	fchmodatTrap   uintptr = syscall.SYS_FCHMODAT
 	fchownatTrap   uintptr = syscall.SYS_FCHOWNAT
-	fstatatTrap    uintptr = syscall.SYS_FSTATAT
+	fstatatTrap    uintptr = syscall.SYS_NEWFSTATAT
 	linkatTrap     uintptr = syscall.SYS_LINKAT
 	symlinkatTrap  uintptr = syscall.SYS_SYMLINKAT
 )
