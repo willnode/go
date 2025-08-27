@@ -2,12 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build aix || darwin || dragonfly || freebsd || linux || netbsd || openbsd
-
 package poll
 
-import "syscall"
+import (
+	"syscall"
+	"unsafe"
+)
 
 func newIovecWithBase(base *byte) syscall.Iovec {
-	return syscall.Iovec{Base: base}
+	return syscall.Iovec{Base: (*int8)(unsafe.Pointer(base))}
 }

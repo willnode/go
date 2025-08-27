@@ -108,6 +108,7 @@ func archinit(ctxt *ld.Link) {
 		objabi.Hnetbsd,    /* netbsd */
 		objabi.Hopenbsd,   /* openbsd */
 		objabi.Hdragonfly, /* dragonfly */
+		objabi.Hredox,     /* redox */
 		objabi.Hsolaris:   /* solaris */
 		ld.Elfinit(ctxt)
 

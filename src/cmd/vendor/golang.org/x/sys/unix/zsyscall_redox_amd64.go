@@ -3,7 +3,7 @@
 
 //go:build redox && amd64
 
-package syscall
+package unix
 
 import "unsafe"
 

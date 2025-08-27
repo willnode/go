@@ -1940,11 +1940,6 @@ func asmbElf(ctxt *Link) {
 					if interpreter == "" {
 						Exitf("ELF interpreter not set")
 					}
-				} else if buildcfg.GOOS == "redox" {
-					interpreter = thearch.ELF.Redoxdynld
-					if interpreter == "" {
-						Exitf("ELF interpreter not set")
-					}
 				} else {
 					interpreter = thearch.ELF.Linuxdynld
 					// If interpreter does not exist, try musl instead.
@@ -1970,6 +1965,9 @@ func asmbElf(ctxt *Link) {
 
 			case objabi.Hdragonfly:
 				interpreter = thearch.ELF.Dragonflydynld
+
+			case objabi.Hredox:
+				interpreter = thearch.ELF.Redoxdynld
 
 			case objabi.Hsolaris:
 				interpreter = thearch.ELF.Solarisdynld
@@ -2200,7 +2198,7 @@ func asmbElf(ctxt *Link) {
 		}
 	}
 
-	if ctxt.HeadType == objabi.Hlinux || ctxt.HeadType == objabi.Hfreebsd {
+	if ctxt.HeadType == objabi.Hlinux || ctxt.HeadType == objabi.Hfreebsd || ctxt.HeadType == objabi.Hredox {
 		ph := newElfPhdr()
 		ph.Type = elf.PT_GNU_STACK
 		ph.Flags = elf.PF_W + elf.PF_R
