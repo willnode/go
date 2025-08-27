@@ -6,55 +6,106 @@ package runtime
 
 import (
 	"internal/runtime/atomic"
-	"internal/runtime/syscall/redox"
 	"unsafe"
 )
 
 var (
-	epfd           int32         = -1 // epoll descriptor
-	netpollEventFd uintptr            // eventfd for netpollBreak
-	netpollWakeSig atomic.Uint32      // used to avoid duplicate calls of netpollBreak
+	epfd              int32         = -1 // epoll descriptor
+	netpollEventFd    uintptr            // eventfd for netpollBreak
+	netpollWakeWriter uintptr            // the WRITE end of the pipe
+	netpollWakeSig    atomic.Uint32      // used to avoid duplicate calls of netpollBreak
 )
 
+//go:cgo_import_dynamic libc_epoll_create1 epoll_create1 "libc.so"
+//go:cgo_import_dynamic libc_epoll_ctl epoll_ctl "libc.so"
+//go:cgo_import_dynamic libc_epoll_wait epoll_wait "libc.so"
+
+//go:linkname libc_epoll_create1 libc_epoll_create1
+//go:linkname libc_epoll_ctl libc_epoll_ctl
+//go:linkname libc_epoll_wait libc_epoll_wait
+
+var (
+	libc_epoll_create1,
+	libc_epoll_ctl,
+	libc_epoll_wait libcFunc
+)
+
+type EpollEvent struct {
+	Events uint32
+	Data   [8]byte // unaligned uintptr
+}
+
+const (
+	AT_FDCWD = -0x64
+
+	ENOENT = 0x2
+
+	EPOLLIN       = 0x1
+	EPOLLOUT      = 0x4
+	EPOLLERR      = 0x8
+	EPOLLHUP      = 0x10
+	EPOLLRDHUP    = 0x2000
+	EPOLLET       = 0x80000000
+	EPOLL_CLOEXEC = 0x01000000
+	EPOLL_CTL_ADD = 0x1
+	EPOLL_CTL_DEL = 0x2
+	EPOLL_CTL_MOD = 0x3
+)
+
+func epoll_create1(flags int32) (r1 int32, err int32) {
+	r, e := sysvicall1Err(&libc_epoll_create1, uintptr(flags))
+	return int32(r), int32(e)
+}
+
+func epoll_ctl(epfd int32, op int32, fd int32, event *EpollEvent) int32 {
+	return int32(sysvicall4(&libc_epoll_ctl, uintptr(epfd), uintptr(op), uintptr(fd), uintptr(unsafe.Pointer(event))))
+}
+
+func epoll_wait(epfd int32, events *EpollEvent, maxevents int32, timeout int32) (r1 int32, err int32) {
+	r, e := sysvicall4Err(&libc_epoll_wait, uintptr(epfd), uintptr(unsafe.Pointer(events)), uintptr(maxevents), uintptr(timeout))
+	return int32(r), int32(e)
+}
+
 func netpollinit() {
-	var errno uintptr
-	epfd, errno = redox.EpollCreate1(redox.EPOLL_CLOEXEC)
+	var errno int32
+	epfd, errno = epoll_create1(EPOLL_CLOEXEC)
 	if errno != 0 {
 		println("runtime: epollcreate failed with", errno)
 		throw("runtime: netpollinit failed")
 	}
-	efd, errno := redox.Eventfd(0, redox.EFD_CLOEXEC|redox.EFD_NONBLOCK)
+	r, w, errno := nonblockingPipe()
 	if errno != 0 {
-		println("runtime: eventfd failed with", -errno)
-		throw("runtime: eventfd failed")
+		println("runtime: pipe failed with", errno)
+		throw("runtime: netpollinit failed")
 	}
-	ev := redox.EpollEvent{
-		Events: redox.EPOLLIN,
+	ev := EpollEvent{
+		Events: EPOLLIN,
 	}
 	*(**uintptr)(unsafe.Pointer(&ev.Data)) = &netpollEventFd
-	errno = redox.EpollCtl(epfd, redox.EPOLL_CTL_ADD, efd, &ev)
+	errno = epoll_ctl(epfd, EPOLL_CTL_ADD, r, &ev)
 	if errno != 0 {
 		println("runtime: epollctl failed with", errno)
 		throw("runtime: epollctl failed")
 	}
-	netpollEventFd = uintptr(efd)
+	netpollEventFd = uintptr(r)
+	netpollWakeWriter = uintptr(w)
 }
 
 func netpollIsPollDescriptor(fd uintptr) bool {
 	return fd == uintptr(epfd) || fd == netpollEventFd
 }
 
-func netpollopen(fd uintptr, pd *pollDesc) uintptr {
-	var ev redox.EpollEvent
-	ev.Events = redox.EPOLLIN | redox.EPOLLOUT | redox.EPOLLRDHUP | redox.EPOLLET
+func netpollopen(fd uintptr, pd *pollDesc) int32 {
+	var ev EpollEvent
+	ev.Events = EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET
 	tp := taggedPointerPack(unsafe.Pointer(pd), pd.fdseq.Load())
 	*(*taggedPointer)(unsafe.Pointer(&ev.Data)) = tp
-	return redox.EpollCtl(epfd, redox.EPOLL_CTL_ADD, int32(fd), &ev)
+	return epoll_ctl(epfd, EPOLL_CTL_ADD, int32(fd), &ev)
 }
 
-func netpollclose(fd uintptr) uintptr {
-	var ev redox.EpollEvent
-	return redox.EpollCtl(epfd, redox.EPOLL_CTL_DEL, int32(fd), &ev)
+func netpollclose(fd uintptr) int32 {
+	var ev EpollEvent
+	return epoll_ctl(epfd, EPOLL_CTL_DEL, int32(fd), &ev)
 }
 
 func netpollarm(pd *pollDesc, mode int) {
@@ -71,7 +122,7 @@ func netpollBreak() {
 	var one uint64 = 1
 	oneSize := int32(unsafe.Sizeof(one))
 	for {
-		n := write(netpollEventFd, noescape(unsafe.Pointer(&one)), oneSize)
+		n := write(netpollWakeWriter, noescape(unsafe.Pointer(&one)), oneSize)
 		if n == oneSize {
 			break
 		}
@@ -112,9 +163,9 @@ func netpoll(delay int64) (gList, int32) {
 		// 1e9 ms == ~11.5 days.
 		waitms = 1e9
 	}
-	var events [128]redox.EpollEvent
+	var events [128]EpollEvent
 retry:
-	n, errno := redox.EpollWait(epfd, events[:], int32(len(events)), waitms)
+	n, errno := epoll_wait(epfd, &events[0], int32(len(events)), waitms)
 	if errno != 0 {
 		if errno != _EINTR {
 			println("runtime: epollwait on fd", epfd, "failed with", errno)
@@ -136,7 +187,7 @@ retry:
 		}
 
 		if *(**uintptr)(unsafe.Pointer(&ev.Data)) == &netpollEventFd {
-			if ev.Events != redox.EPOLLIN {
+			if ev.Events != EPOLLIN {
 				println("runtime: netpoll: eventfd ready for", ev.Events)
 				throw("runtime: netpoll: eventfd ready for something unexpected")
 			}
@@ -154,10 +205,10 @@ retry:
 		}
 
 		var mode int32
-		if ev.Events&(redox.EPOLLIN|redox.EPOLLRDHUP|redox.EPOLLHUP|redox.EPOLLERR) != 0 {
+		if ev.Events&(EPOLLIN|EPOLLRDHUP|EPOLLHUP|EPOLLERR) != 0 {
 			mode += 'r'
 		}
-		if ev.Events&(redox.EPOLLOUT|redox.EPOLLHUP|redox.EPOLLERR) != 0 {
+		if ev.Events&(EPOLLOUT|EPOLLHUP|EPOLLERR) != 0 {
 			mode += 'w'
 		}
 		if mode != 0 {
@@ -165,7 +216,7 @@ retry:
 			pd := (*pollDesc)(tp.pointer())
 			tag := tp.tag()
 			if pd.fdseq.Load() == tag {
-				pd.setEventErr(ev.Events == redox.EPOLLERR, tag)
+				pd.setEventErr(ev.Events == EPOLLERR, tag)
 				delta += netpollready(&toRun, pd, mode)
 			}
 		}

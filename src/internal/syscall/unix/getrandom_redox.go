@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build dragonfly || freebsd || linux
-
 package unix
 
 import (
@@ -12,31 +10,39 @@ import (
 	"unsafe"
 )
 
-//go:linkname vgetrandom runtime.vgetrandom
-//go:noescape
-func vgetrandom(p []byte, flags uint32) (ret int, supported bool)
+//go:cgo_import_dynamic libc_getrandom getrandom "libc.so"
+
+//go:linkname procGetrandom libc_getrandom
+
+var procGetrandom uintptr
 
 var getrandomUnsupported atomic.Bool
 
 // GetRandomFlag is a flag supported by the getrandom system call.
 type GetRandomFlag uintptr
 
+const (
+	// GRND_NONBLOCK means return EAGAIN rather than blocking.
+	GRND_NONBLOCK GetRandomFlag = 0x0001
+
+	// GRND_RANDOM means use the /dev/random pool instead of /dev/urandom.
+	GRND_RANDOM GetRandomFlag = 0x0002
+)
+
 // GetRandom calls the getrandom system call.
 func GetRandom(p []byte, flags GetRandomFlag) (n int, err error) {
-	ret, supported := vgetrandom(p, uint32(flags))
-	if supported {
-		if ret < 0 {
-			return 0, syscall.Errno(-ret)
-		}
-		return ret, nil
+	if len(p) == 0 {
+		return 0, nil
 	}
 	if getrandomUnsupported.Load() {
 		return 0, syscall.ENOSYS
 	}
-	r1, _, errno := syscall.Syscall(getrandomTrap,
-		uintptr(unsafe.Pointer(unsafe.SliceData(p))),
+	r1, _, errno := syscall6(uintptr(unsafe.Pointer(&procGetrandom)),
+		3,
+		uintptr(unsafe.Pointer(&p[0])),
 		uintptr(len(p)),
-		uintptr(flags))
+		uintptr(flags),
+		0, 0, 0)
 	if errno != 0 {
 		if errno == syscall.ENOSYS {
 			getrandomUnsupported.Store(true)

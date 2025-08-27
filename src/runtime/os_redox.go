@@ -60,7 +60,7 @@ func sysvicall1(fn *libcFunc, a1 uintptr) uintptr {
 }
 
 // sysvicall1Err returns both the system call result and the errno value.
-// This is used by sysvicall1 and pipe.
+// This is used by sysvicall1, epoll_create1 and pipe.
 //
 //go:nosplit
 func sysvicall1Err(fn *libcFunc, a1 uintptr) (r1, err uintptr) {
@@ -198,6 +198,39 @@ func sysvicall4(fn *libcFunc, a1, a2, a3, a4 uintptr) uintptr {
 		mp.libcallsp = 0
 	}
 	return libcall.r1
+}
+
+//go:nosplit
+//go:cgo_unsafe_args
+
+// sysvicall4Err returns both the system call result and the errno value.
+// This is used by sysvicall4 and epoll_wait.
+func sysvicall4Err(fn *libcFunc, a1, a2, a3, a4 uintptr) (r1, err uintptr) {
+	// Leave caller's PC/SP around for traceback.
+	gp := getg()
+	var mp *m
+	if gp != nil {
+		mp = gp.m
+	}
+	if mp != nil && mp.libcallsp == 0 {
+		mp.libcallg.set(gp)
+		mp.libcallpc = sys.GetCallerPC()
+		// sp must be the last, because once async cpu profiler finds
+		// all three values to be non-zero, it will use them
+		mp.libcallsp = sys.GetCallerSP()
+	} else {
+		mp = nil
+	}
+
+	var libcall libcall
+	libcall.fn = uintptr(unsafe.Pointer(fn))
+	libcall.n = 4
+	libcall.args = uintptr(noescape(unsafe.Pointer(&a1)))
+	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&libcall))
+	if mp != nil {
+		mp.libcallsp = 0
+	}
+	return libcall.r1, libcall.err
 }
 
 //go:nosplit

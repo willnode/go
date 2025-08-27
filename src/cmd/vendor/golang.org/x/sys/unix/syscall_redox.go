@@ -72,26 +72,6 @@ func Pipe2(p []int, flags int) error {
 	return err
 }
 
-//sys   accept4(s int, rsa *RawSockaddrAny, addrlen *_Socklen, flags int) (fd int, err error) = libsocket.accept4
-
-func Accept4(fd int, flags int) (int, Sockaddr, error) {
-	var rsa RawSockaddrAny
-	var addrlen _Socklen = SizeofSockaddrAny
-	nfd, err := accept4(fd, &rsa, &addrlen, flags)
-	if err != nil {
-		return 0, nil, err
-	}
-	if addrlen > SizeofSockaddrAny {
-		panic("RawSockaddrAny too small")
-	}
-	sa, err := anyToSockaddr(&rsa)
-	if err != nil {
-		Close(nfd)
-		return 0, nil, err
-	}
-	return nfd, sa, nil
-}
-
 func (sa *SockaddrInet4) sockaddr() (unsafe.Pointer, _Socklen, error) {
 	if sa.Port < 0 || sa.Port > 0xFFFF {
 		return nil, 0, EINVAL
@@ -148,7 +128,7 @@ func Getsockname(fd int) (sa Sockaddr, err error) {
 	if err = getsockname(fd, &rsa, &len); err != nil {
 		return
 	}
-	return anyToSockaddr(&rsa)
+	return anyToSockaddr(fd, &rsa)
 }
 
 const ImplementsGetwd = true
@@ -298,6 +278,16 @@ func UtimesNano(path string, ts []Timespec) error {
 	return utimensat(_AT_FDCWD, path, (*[2]Timespec)(unsafe.Pointer(&ts[0])), 0)
 }
 
+func UtimesNanoAt(dirfd int, path string, ts []Timespec, flags int) error {
+	if ts == nil {
+		return utimensat(dirfd, path, nil, flags)
+	}
+	if len(ts) != 2 {
+		return EINVAL
+	}
+	return utimensat(dirfd, path, (*[2]Timespec)(unsafe.Pointer(&ts[0])), flags)
+}
+
 //sys	fcntl(fd int, cmd int, arg int) (val int, err error)
 
 // FcntlFlock performs a fcntl syscall for the [F_GETLK], [F_SETLK] or [F_SETLKW] command.
@@ -309,13 +299,13 @@ func FcntlFlock(fd uintptr, cmd int, lk *Flock_t) error {
 	return nil
 }
 
-func anyToSockaddr(rsa *RawSockaddrAny) (Sockaddr, error) {
+func anyToSockaddr(fd int, rsa *RawSockaddrAny) (Sockaddr, error) {
 	switch rsa.Addr.Family {
 	case AF_UNIX:
 		pp := (*RawSockaddrUnix)(unsafe.Pointer(rsa))
 		sa := new(SockaddrUnix)
 		// Assume path ends at NUL.
-		// This is not technically the redox semantics for
+		// This is not technically the Solaris semantics for
 		// abstract Unix domain sockets -- they are supposed
 		// to be uninterpreted fixed-size binary blobs -- but
 		// everyone uses this convention.
@@ -352,10 +342,10 @@ func Accept(fd int) (nfd int, sa Sockaddr, err error) {
 	var rsa RawSockaddrAny
 	var len _Socklen = SizeofSockaddrAny
 	nfd, err = accept(fd, &rsa, &len)
-	if err != nil {
+	if nfd == -1 {
 		return
 	}
-	sa, err = anyToSockaddr(&rsa)
+	sa, err = anyToSockaddr(fd, &rsa)
 	if err != nil {
 		Close(nfd)
 		nfd = 0
@@ -363,28 +353,28 @@ func Accept(fd int) (nfd int, sa Sockaddr, err error) {
 	return
 }
 
-func recvmsgRaw(fd int, p, oob []byte, flags int, rsa *RawSockaddrAny) (n, oobn int, recvflags int, err error) {
+//sys	recvmsg(s int, msg *Msghdr, flags int) (n int, err error) = libsocket.__xnet_recvmsg
+
+func recvmsgRaw(fd int, iov []Iovec, oob []byte, flags int, rsa *RawSockaddrAny) (n, oobn int, recvflags int, err error) {
 	var msg Msghdr
 	msg.Name = (*byte)(unsafe.Pointer(rsa))
 	msg.Namelen = uint32(SizeofSockaddrAny)
-	var iov Iovec
-	if len(p) > 0 {
-		iov.Base = (*int8)(unsafe.Pointer(&p[0]))
-		iov.SetLen(len(p))
-	}
-	var dummy int8
+	var dummy byte
 	if len(oob) > 0 {
 		// receive at least one normal byte
-		if len(p) == 0 {
-			iov.Base = &dummy
-			iov.SetLen(1)
+		if emptyIovecs(iov) {
+			var iova [1]Iovec
+			iova[0].Base = &dummy
+			iova[0].SetLen(1)
+			iov = iova[:]
 		}
-		msg.Accrights = (*int8)(unsafe.Pointer(&oob[0]))
 		msg.Accrightslen = int32(len(oob))
 	}
-	msg.Iov = &iov
-	msg.Iovlen = 1
-	if n, err = recvmsg(fd, &msg, flags); err != nil {
+	if len(iov) > 0 {
+		msg.Iov = &iov[0]
+		msg.SetIovlen(len(iov))
+	}
+	if n, err = recvmsg(fd, &msg, flags); n == -1 {
 		return
 	}
 	oobn = int(msg.Accrightslen)
@@ -393,31 +383,31 @@ func recvmsgRaw(fd int, p, oob []byte, flags int, rsa *RawSockaddrAny) (n, oobn 
 
 //sys	sendmsg(s int, msg *Msghdr, flags int) (n int, err error) = libsocket.__xnet_sendmsg
 
-func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags int) (n int, err error) {
+func sendmsgN(fd int, iov []Iovec, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags int) (n int, err error) {
 	var msg Msghdr
 	msg.Name = (*byte)(unsafe.Pointer(ptr))
 	msg.Namelen = uint32(salen)
-	var iov Iovec
-	if len(p) > 0 {
-		iov.Base = (*int8)(unsafe.Pointer(&p[0]))
-		iov.SetLen(len(p))
-	}
-	var dummy int8
+	var dummy byte
+	var empty bool
 	if len(oob) > 0 {
 		// send at least one normal byte
-		if len(p) == 0 {
-			iov.Base = &dummy
-			iov.SetLen(1)
+		empty = emptyIovecs(iov)
+		if empty {
+			var iova [1]Iovec
+			iova[0].Base = &dummy
+			iova[0].SetLen(1)
+			iov = iova[:]
 		}
-		msg.Accrights = (*int8)(unsafe.Pointer(&oob[0]))
 		msg.Accrightslen = int32(len(oob))
 	}
-	msg.Iov = &iov
-	msg.Iovlen = 1
+	if len(iov) > 0 {
+		msg.Iov = &iov[0]
+		msg.SetIovlen(len(iov))
+	}
 	if n, err = sendmsg(fd, &msg, flags); err != nil {
 		return 0, err
 	}
-	if len(oob) > 0 && len(p) == 0 {
+	if len(oob) > 0 && empty {
 		n = 0
 	}
 	return n, nil
