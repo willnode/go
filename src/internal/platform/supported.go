@@ -240,7 +240,7 @@ func InternalLinkPIESupported(goos, goarch string) bool {
 // so force the caller to pass that in to centralize that choice.
 func DefaultPIE(goos, goarch string, isRace bool) bool {
 	switch goos {
-	case "android", "ios", "redox":
+	case "android", "ios":
 		return true
 	case "windows":
 		if isRace {
