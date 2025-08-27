@@ -271,11 +271,16 @@ func Gethostname() (name string, err error) {
 	return name, err
 }
 
+//sys	utimensat(fd int, path string, times *[2]Timespec, flag int) (err error)
+
 func UtimesNano(path string, ts []Timespec) error {
+	if ts == nil {
+		return utimensat(AT_FDCWD, path, nil, 0)
+	}
 	if len(ts) != 2 {
 		return EINVAL
 	}
-	return utimensat(_AT_FDCWD, path, (*[2]Timespec)(unsafe.Pointer(&ts[0])), 0)
+	return utimensat(AT_FDCWD, path, (*[2]Timespec)(unsafe.Pointer(&ts[0])), 0)
 }
 
 func UtimesNanoAt(dirfd int, path string, ts []Timespec, flags int) error {
