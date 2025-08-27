@@ -1,12 +1,10 @@
-// Copyright 2009 The Go Authors. All rights reserved.
+// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-#include <sys/types.h>
-#include <sys/signalvar.h>
 #include <pthread.h>
-#include <signal.h>
 #include <string.h>
+#include <signal.h>
 #include "libcgo.h"
 #include "libcgo_unix.h"
 
@@ -26,18 +24,25 @@ _cgo_sys_thread_start(ThreadStart *ts)
 	pthread_attr_t attr;
 	sigset_t ign, oset;
 	pthread_t p;
+	void *base;
 	size_t size;
 	int err;
 
-	SIGFILLSET(ign);
+	sigfillset(&ign);
 	pthread_sigmask(SIG_SETMASK, &ign, &oset);
 
 	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	pthread_attr_getstacksize(&attr, &size);
 
-	// Leave stacklo=0 and set stackhi=size; mstart will do the rest.
-	ts->g->stackhi = size;
+	if (pthread_attr_getstack(&attr, &base, &size) != 0)
+		perror("runtime/cgo: pthread_attr_getstack failed");
+	if (size == 0) {
+		ts->g->stackhi = 2 << 20;
+		if (pthread_attr_setstack(&attr, NULL, ts->g->stackhi) != 0)
+			perror("runtime/cgo: pthread_attr_setstack failed");
+	} else {
+		ts->g->stackhi = size;
+	}
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	err = _cgo_try_pthread_create(&p, &attr, threadentry, ts);
 
 	pthread_sigmask(SIG_SETMASK, &oset, nil);
