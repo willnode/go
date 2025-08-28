@@ -146,6 +146,7 @@ var initSigmask sigset
 
 // The main goroutine.
 func main() {
+	print("main goroutine")
 	mp := getg().m
 
 	// Racectx of m0->g0 is used only as the parent of the main goroutine.
@@ -824,6 +825,8 @@ func getGodebugEarly() string {
 //
 // The new G calls runtime·main.
 func schedinit() {
+	print("schedinit")
+
 	lockInit(&sched.lock, lockRankSched)
 	lockInit(&sched.sysmonlock, lockRankSysmon)
 	lockInit(&sched.deferlock, lockRankDefer)
@@ -845,6 +848,8 @@ func schedinit() {
 	lockInit(&memstats.heapStats.noPLock, lockRankLeafRank)
 
 	lockVerifyMSize()
+
+	print("schedlock")
 
 	// raceinit must be the first call to race detector.
 	// In particular, it must be done before mallocinit below calls racemapshadow.
@@ -981,6 +986,7 @@ func mReserveID() int64 {
 
 // Pre-allocated ID may be passed as 'id', or omitted by passing -1.
 func mcommoninit(mp *m, id int64) {
+	print("mcommoninit")
 	gp := getg()
 
 	// g0 stack won't make sense for user (and is not necessary unwindable).
@@ -1013,7 +1019,7 @@ func mcommoninit(mp *m, id int64) {
 	unlock(&sched.lock)
 
 	// Allocate memory to hold a cgo traceback if the cgo call crashes.
-	if iscgo || GOOS == "solaris" || GOOS == "illumos" || GOOS == "windows" {
+	if iscgo || GOOS == "redox" || GOOS == "solaris" || GOOS == "illumos" || GOOS == "windows" {
 		mp.cgoCallers = new(cgoCallers)
 	}
 	mProfStackInit(mp)

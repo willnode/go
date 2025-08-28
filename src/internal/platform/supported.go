@@ -114,6 +114,9 @@ func MustLinkExternal(goos, goarch string, withCgo bool) bool {
 	}
 
 	switch goos {
+	case "redox":
+		// relibc handles thread local storage
+		return true
 	case "android":
 		if goarch != "arm64" {
 			return true
@@ -228,7 +231,6 @@ func InternalLinkPIESupported(goos, goarch string) bool {
 	case "android/arm64",
 		"darwin/amd64", "darwin/arm64",
 		"linux/amd64", "linux/arm64", "linux/loong64", "linux/ppc64le",
-		"redox/386", "redox/amd64", "redox/arm64", "redox/riscv64",
 		"windows/386", "windows/amd64", "windows/arm64":
 		return true
 	}

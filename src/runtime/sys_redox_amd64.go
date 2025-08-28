@@ -15,7 +15,6 @@ import (
 //go:cgo_export_dynamic runtime.etext _etext
 //go:cgo_export_dynamic runtime.edata _edata
 
-//go:cgo_import_dynamic libc____errno ___errno "libc.so"
 //go:cgo_import_dynamic libc_clock_gettime clock_gettime "libc.so"
 //go:cgo_import_dynamic libc_exit _exit "libc.so"
 //go:cgo_import_dynamic libc_getcontext getcontext "libc.so"
@@ -39,7 +38,7 @@ import (
 //go:cgo_import_dynamic libc_sched_yield sched_yield "libc.so"
 //go:cgo_import_dynamic libc_sem_init sem_init "libc.so"
 //go:cgo_import_dynamic libc_sem_post sem_post "libc.so"
-//go:cgo_import_dynamic libc_sem_reltimedwait_np sem_reltimedwait_np "libc.so"
+//go:cgo_import_dynamic libc_sem_timedwait sem_timedwait "libc.so"
 //go:cgo_import_dynamic libc_sem_wait sem_wait "libc.so"
 //go:cgo_import_dynamic libc_setitimer setitimer "libc.so"
 //go:cgo_import_dynamic libc_sigaction sigaction "libc.so"
@@ -50,7 +49,6 @@ import (
 //go:cgo_import_dynamic libc_write write "libc.so"
 //go:cgo_import_dynamic libc_pipe2 pipe2 "libc.so"
 
-//go:linkname libc____errno libc____errno
 //go:linkname libc_clock_gettime libc_clock_gettime
 //go:linkname libc_exit libc_exit
 //go:linkname libc_getcontext libc_getcontext
@@ -74,7 +72,7 @@ import (
 //go:linkname libc_sched_yield libc_sched_yield
 //go:linkname libc_sem_init libc_sem_init
 //go:linkname libc_sem_post libc_sem_post
-//go:linkname libc_sem_reltimedwait_np libc_sem_reltimedwait_np
+//go:linkname libc_sem_timedwait libc_sem_timedwait
 //go:linkname libc_sem_wait libc_sem_wait
 //go:linkname libc_setitimer libc_setitimer
 //go:linkname libc_sigaction libc_sigaction
@@ -86,7 +84,6 @@ import (
 //go:linkname libc_pipe2 libc_pipe2
 
 var (
-	libc____errno,
 	libc_clock_gettime,
 	libc_exit,
 	libc_getcontext,
@@ -110,7 +107,7 @@ var (
 	libc_select,
 	libc_sem_init,
 	libc_sem_post,
-	libc_sem_reltimedwait_np,
+	libc_sem_timedwait,
 	libc_sem_wait,
 	libc_setitimer,
 	libc_sigaction,
@@ -124,8 +121,23 @@ var (
 
 var sigset_all = sigset{[4]uint32{^uint32(0), ^uint32(0), ^uint32(0), ^uint32(0)}}
 
+//
+// C library function declarations
+//
+
+func getCPUCount() int32 {
+	print("cpucount 1")
+	n := int32(sysconf(_SC_NPROCESSORS_ONLN))
+	print("cpucount 2")
+	if n < 1 {
+		return 1
+	}
+
+	return n
+}
+
 func getPageSize() uintptr {
-	n := int32(sysconf(__SC_PAGESIZE))
+	n := int32(sysconf(_SC_PAGESIZE))
 	if n <= 0 {
 		return 0
 	}
@@ -133,14 +145,14 @@ func getPageSize() uintptr {
 }
 
 func osinit() {
-	// Call miniterrno so that we can safely make system calls
-	// before calling minit on m0.
-	asmcgocall(unsafe.Pointer(abi.FuncPCABI0(miniterrno)), unsafe.Pointer(&libc____errno))
-
+	print("osinit")
 	numCPUStartup = getCPUCount()
+
 	if physPageSize == 0 {
 		physPageSize = getPageSize()
+
 	}
+	print("physdone")
 }
 
 func tstart_sysvicall(newm *m) uint32
@@ -156,6 +168,7 @@ func newosproc(mp *m) {
 		ret  int32
 		size uint64
 	)
+	print("newosproc")
 
 	if pthread_attr_init(&attr) != 0 {
 		throw("pthread_attr_init")
@@ -216,13 +229,9 @@ func mpreinit(mp *m) {
 	mp.gsignal.m = mp
 }
 
-func miniterrno()
-
 // Called to initialize a new m (including the bootstrap m).
 // Called on the new thread, cannot allocate memory.
 func minit() {
-	asmcgocall(unsafe.Pointer(abi.FuncPCABI0(miniterrno)), unsafe.Pointer(&libc____errno))
-
 	minitSignals()
 
 	getg().m.procid = uint64(pthread_self())
@@ -344,7 +353,7 @@ func semasleep(ns int64) int32 {
 		mp.ts.tv_sec = ns / 1000000000
 		mp.ts.tv_nsec = ns % 1000000000
 
-		mp.libcall.fn = uintptr(unsafe.Pointer(&libc_sem_reltimedwait_np))
+		mp.libcall.fn = uintptr(unsafe.Pointer(&libc_sem_timedwait))
 		mp.libcall.n = 2
 		mp.scratch = mscratch{}
 		mp.scratch.v[0] = mp.waitsema
@@ -355,7 +364,7 @@ func semasleep(ns int64) int32 {
 			if *mp.perrno == _ETIMEDOUT || *mp.perrno == _EAGAIN || *mp.perrno == _EINTR {
 				return -1
 			}
-			throw("sem_reltimedwait_np")
+			throw("sem_timedwait")
 		}
 		return 0
 	}
@@ -504,8 +513,8 @@ func sem_post(sem *sem_t) int32 {
 }
 
 //go:nosplit
-func sem_reltimedwait_np(sem *sem_t, timeout *timespec) int32 {
-	return int32(sysvicall2(&libc_sem_reltimedwait_np, uintptr(unsafe.Pointer(sem)), uintptr(unsafe.Pointer(timeout))))
+func sem_timedwait(sem *sem_t, timeout *timespec) int32 {
+	return int32(sysvicall2(&libc_sem_timedwait, uintptr(unsafe.Pointer(sem)), uintptr(unsafe.Pointer(timeout))))
 }
 
 //go:nosplit
@@ -618,6 +627,7 @@ const (
 )
 
 func sysauxv(auxv []uintptr) (pairs int) {
+	print("sysauxv")
 	var i int
 	for i = 0; auxv[i] != _AT_NULL; i += 2 {
 		tag, val := auxv[i], auxv[i+1]

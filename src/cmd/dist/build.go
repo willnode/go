@@ -649,6 +649,9 @@ func mustLinkExternal(goos, goarch string, cgoEnabled bool) bool {
 	}
 
 	switch goos {
+	case "redox":
+		// relibc handles thread local storage
+		return true
 	case "android":
 		if goarch != "arm64" {
 			return true

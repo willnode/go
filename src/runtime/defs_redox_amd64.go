@@ -150,16 +150,6 @@ type mscratch struct {
 	v [6]uintptr
 }
 
-// OS-specific state for a machine (m).
-type mOS struct {
-	waitsema uintptr // semaphore for parking on locks
-	perrno   *int32  // pointer to tls errno
-	// This is here to avoid using the G stack so the stack can move during the call.
-	libcall libcall
-	ts      timespec
-	scratch mscratch
-}
-
 const (
 	_EINTR     = 0x4
 	_EAGAIN    = 0xb
@@ -192,8 +182,6 @@ const (
 	_ITIMER_PROF    = 0x2
 
 	_CLOCK_THREAD_CPUTIME_ID = 0x3
-
-	__SC_PAGESIZE = 0xb
 
 	_SIGEV_THREAD_ID = 0x4
 

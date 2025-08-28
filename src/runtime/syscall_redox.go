@@ -12,7 +12,6 @@ var (
 	libc_close,
 	libc_execve,
 	libc_fcntl,
-	libc_forkx,
 	libc_gethostname,
 	libc_getpid,
 	libc_ioctl,
@@ -22,9 +21,7 @@ var (
 	libc_setsid,
 	libc_setuid,
 	libc_setpgid,
-	libc_syscall,
-	libc_issetugid,
-	libc_wait4 libcFunc
+	libc_issetugid libcFunc
 )
 
 // Many of these are exported via linkname to assembly in the syscall
@@ -139,16 +136,7 @@ func syscall_fcntl(fd, cmd, arg uintptr) (val, err uintptr) {
 //go:nosplit
 //go:linkname syscall_forkx
 func syscall_forkx(flags uintptr) (pid uintptr, err uintptr) {
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_forkx)),
-		n:    1,
-		args: uintptr(unsafe.Pointer(&flags)),
-	}
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	if int(call.r1) != -1 {
-		call.err = 0
-	}
-	return call.r1, call.err
+	panic("forkx TODO")
 }
 
 //go:linkname syscall_gethostname
@@ -289,31 +277,13 @@ func syscall_setpgid(pid, pgid uintptr) (err uintptr) {
 //go:linkname syscall_syscall
 //go:cgo_unsafe_args
 func syscall_syscall(trap, a1, a2, a3 uintptr) (r1, r2, err uintptr) {
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_syscall)),
-		n:    4,
-		args: uintptr(unsafe.Pointer(&trap)),
-	}
-	entersyscallblock()
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	exitsyscall()
-	return call.r1, call.r2, call.err
+	panic("syscall TODO")
 }
 
 //go:linkname syscall_wait4
 //go:cgo_unsafe_args
 func syscall_wait4(pid uintptr, wstatus *uint32, options uintptr, rusage unsafe.Pointer) (wpid int, err uintptr) {
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_wait4)),
-		n:    4,
-		args: uintptr(unsafe.Pointer(&pid)),
-	}
-	entersyscallblock()
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	exitsyscall()
-	KeepAlive(wstatus)
-	KeepAlive(rusage)
-	return int(call.r1), call.err
+	panic("wait4 TODO")
 }
 
 //go:nosplit

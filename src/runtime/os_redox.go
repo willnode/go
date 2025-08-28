@@ -9,12 +9,15 @@ import (
 	"unsafe"
 )
 
-//
-// C library function declarations
-//
 
-func getCPUCount() int32 {
-	return int32(1)
+// OS-specific state for a machine (m).
+type mOS struct {
+	waitsema uintptr // semaphore for parking on locks
+	perrno   *int32  // pointer to tls errno
+	// This is here to avoid using the G stack so the stack can move during the call.
+	libcall libcall
+	ts      timespec
+	scratch mscratch
 }
 
 type libcFunc uintptr
@@ -173,31 +176,8 @@ func sysvicall3Err(fn *libcFunc, a1, a2, a3 uintptr) (r1, err uintptr) {
 //go:nosplit
 //go:cgo_unsafe_args
 func sysvicall4(fn *libcFunc, a1, a2, a3, a4 uintptr) uintptr {
-	// Leave caller's PC/SP around for traceback.
-	gp := getg()
-	var mp *m
-	if gp != nil {
-		mp = gp.m
-	}
-	if mp != nil && mp.libcallsp == 0 {
-		mp.libcallg.set(gp)
-		mp.libcallpc = sys.GetCallerPC()
-		// sp must be the last, because once async cpu profiler finds
-		// all three values to be non-zero, it will use them
-		mp.libcallsp = sys.GetCallerSP()
-	} else {
-		mp = nil
-	}
-
-	var libcall libcall
-	libcall.fn = uintptr(unsafe.Pointer(fn))
-	libcall.n = 4
-	libcall.args = uintptr(noescape(unsafe.Pointer(&a1)))
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&libcall))
-	if mp != nil {
-		mp.libcallsp = 0
-	}
-	return libcall.r1
+	r1, _ := sysvicall4Err(fn, a1, a2, a3, a4)
+	return r1
 }
 
 //go:nosplit
