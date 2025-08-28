@@ -7,7 +7,6 @@
 #include <signal.h>
 #include "libcgo.h"
 #include "libcgo_unix.h"
-#include <stdio.h>
 
 static void* threadentry(void*);
 static void (*setg_gcc)(void*);
@@ -29,8 +28,6 @@ _cgo_sys_thread_start(ThreadStart *ts)
 	size_t size;
 	int err;
 
-	printf("thread_start\n");
-
 	sigfillset(&ign);
 	pthread_sigmask(SIG_SETMASK, &ign, &oset);
 
@@ -45,10 +42,12 @@ _cgo_sys_thread_start(ThreadStart *ts)
 	} else {
 		ts->g->stackhi = size;
 	}
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	// pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
 	err = _cgo_try_pthread_create(&p, &attr, threadentry, ts);
 
 	pthread_sigmask(SIG_SETMASK, &oset, nil);
+
 
 	if (err != 0) {
 		perror("pthread_create failed");

@@ -681,7 +681,7 @@ const (
 	RLIMIT_CPU                    = 0x0
 	RLIMIT_DATA                   = 0x2
 	RLIMIT_FSIZE                  = 0x1
-	RLIMIT_NOFILE                 = 0x5
+	RLIMIT_NOFILE                 = 0x7
 	RLIMIT_STACK                  = 0x3
 	RLIM_INFINITY                 = -0x3
 	RTAX_AUTHOR                   = 0x6

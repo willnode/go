@@ -1,9 +1,5 @@
 package runtime
 
-import (
-	"unsafe"
-)
-
 const (
 	_si_max_size    = 128
 	_sigev_max_size = 64
@@ -115,39 +111,42 @@ const (
 
 type pthread_t uintptr
 
-// Pthread mutex, 40 bytes on 64-bit Linux.
+// Pthread mutex, 12 bytes on relibc.
 type pthread_mutex_t struct {
-	__align [40]byte
+	__align [12]byte
 }
 
-// Pthread condition variable, 48 bytes on 64-bit Linux.
+// Pthread condition variable, 8 bytes on relibc.
 type pthread_cond_t struct {
-	__align [48]byte
+	__align [8]byte
 }
 
-// Pthread attributes, 56 bytes on 64-bit Linux.
+// Pthread attributes, 32 bytes on relibc.
 type pthread_attr_t struct {
-	__align [56]byte
+	__align [32]byte
 }
 
-// For sigaction. A set of signals.
 type sigset struct {
-	__bits [4]uint32 // Supports up to 128 signals.
-}
-
-type siginfoFields struct {
-	si_signo int32
-	si_errno int32
-	si_code  int32
-	// below here is a union; si_addr is the only field we use
-	si_addr uint64
+	__bits [2]uint32
 }
 
 type siginfo struct {
-	siginfoFields
+	si_signo int32
+	si_errno int32
+	si_code  int32
+	si_pid   int32  // pid_t is int32
+	si_uid   uint32 // uid_t is uint32
 
-	// Pad struct to the max size in the kernel.
-	_ [_si_max_size - unsafe.Sizeof(siginfoFields{})]byte
+	// on amd64, the go compiler will add 4 bytes of padding here
+	// to align the next field (si_addr) to an 8-byte boundary.
+
+	si_addr   uintptr // *mut c_void
+	si_status int32
+
+	// the compiler will add another 4 bytes of padding here
+	// to align the final field (si_value).
+
+	si_value uintptr
 }
 
 type sem_t struct {
@@ -163,7 +162,7 @@ const (
 	_EINTR     = 0x4
 	_EAGAIN    = 0xb
 	_ESRCH     = 3
-	_ETIMEDOUT = 60
+	_ETIMEDOUT = 110
 
 	_PROT_NONE  = 0x0
 	_PROT_READ  = 0x4
@@ -232,78 +231,6 @@ type itimerval struct {
 	it_value    timeval
 }
 
-type sigeventFields struct {
-	value  uintptr
-	signo  int32
-	notify int32
-	// below here is a union; sigev_notify_thread_id is the only field we use
-	sigev_notify_thread_id int32
-}
-
-type sigevent struct {
-	sigeventFields
-
-	// Pad struct to the max size in the kernel.
-	_ [_sigev_max_size - unsafe.Sizeof(sigeventFields{})]byte
-}
-
-type usigset struct {
-	__val [16]uint64
-}
-
-type fpxreg struct {
-	significand [4]uint16
-	exponent    uint16
-	padding     [3]uint16
-}
-
-type xmmreg struct {
-	element [4]uint32
-}
-
-type fpstate struct {
-	cwd       uint16
-	swd       uint16
-	ftw       uint16
-	fop       uint16
-	rip       uint64
-	rdp       uint64
-	mxcsr     uint32
-	mxcr_mask uint32
-	_st       [8]fpxreg
-	_xmm      [16]xmmreg
-	padding   [24]uint32
-}
-
-type fpxreg1 struct {
-	significand [4]uint16
-	exponent    uint16
-	padding     [3]uint16
-}
-
-type xmmreg1 struct {
-	element [4]uint32
-}
-
-type fpstate1 struct {
-	cwd       uint16
-	swd       uint16
-	ftw       uint16
-	fop       uint16
-	rip       uint64
-	rdp       uint64
-	mxcsr     uint32
-	mxcr_mask uint32
-	_st       [8]fpxreg1
-	_xmm      [16]xmmreg1
-	padding   [24]uint32
-}
-
-type fpreg1 struct {
-	significand [4]uint16
-	exponent    uint16
-}
-
 type stackt struct {
 	ss_sp     uintptr
 	ss_flags  int32
@@ -312,49 +239,54 @@ type stackt struct {
 }
 
 type mcontext struct {
-	gregs       [23]uint64
-	fpregs      *fpstate
-	__reserved1 [8]uint64
+	ymmupper [16][2]uint64
+	fxsave   [29][2]uint64
+	r15      uint64
+	r14      uint64
+	r13      uint64
+	r12      uint64
+	rbp      uint64
+	rbx      uint64
+	r11      uint64
+	r10      uint64
+	r9       uint64
+	r8       uint64
+	rax      uint64
+	rcx      uint64
+	rdx      uint64
+	rsi      uint64
+	rdi      uint64
+	rflags   uint64
+	rip      uint64
+	rsp      uint64
 }
 
 type ucontext struct {
-	uc_flags     uint64
-	uc_link      *ucontext
-	uc_stack     stackt
-	uc_mcontext  mcontext
-	uc_sigmask   usigset
-	__fpregs_mem fpstate
+	__pad       [8]byte
+	uc_link     *ucontext
+	uc_stack    stackt
+	uc_sigmask  sigset
+	_sival      uintptr
+	_sigcode    uint32
+	_signum     uint32
+	uc_mcontext mcontext
 }
 
 type sigcontext struct {
-	r8          uint64
-	r9          uint64
-	r10         uint64
-	r11         uint64
-	r12         uint64
-	r13         uint64
-	r14         uint64
-	r15         uint64
-	rdi         uint64
-	rsi         uint64
-	rbp         uint64
-	rbx         uint64
-	rdx         uint64
-	rax         uint64
-	rcx         uint64
-	rsp         uint64
-	rip         uint64
-	eflags      uint64
-	cs          uint16
-	gs          uint16
-	fs          uint16
-	__pad0      uint16
-	err         uint64
-	trapno      uint64
-	oldmask     uint64
-	cr2         uint64
-	fpstate     *fpstate1
-	__reserved1 [8]uint64
+	// this mirrors the ucontext struct
+	pad_cgo_0 [8]byte
+
+	uclink    *ucontext // or *sigcontext, depending on api
+	ucstack   stackt
+	ucsigmask sigset
+
+	// internal fields from relibc
+	sival   uintptr
+	sigcode uint32
+	signum  uint32
+
+	// the full machine state is embedded here
+	ucmcontext mcontext
 }
 
 type sockaddr_un struct {

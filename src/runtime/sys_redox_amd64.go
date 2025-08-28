@@ -119,16 +119,14 @@ var (
 	libc_pipe2 libcFunc
 )
 
-var sigset_all = sigset{[4]uint32{^uint32(0), ^uint32(0), ^uint32(0), ^uint32(0)}}
+var sigset_all = sigset{[2]uint32{^uint32(0), ^uint32(0)}}
 
 //
 // C library function declarations
 //
 
 func getCPUCount() int32 {
-	print("cpucount 1")
 	n := int32(sysconf(_SC_NPROCESSORS_ONLN))
-	print("cpucount 2")
 	if n < 1 {
 		return 1
 	}
@@ -145,14 +143,12 @@ func getPageSize() uintptr {
 }
 
 func osinit() {
-	print("osinit")
 	numCPUStartup = getCPUCount()
 
 	if physPageSize == 0 {
 		physPageSize = getPageSize()
 
 	}
-	print("physdone")
 }
 
 func tstart_sysvicall(newm *m) uint32
@@ -168,7 +164,6 @@ func newosproc(mp *m) {
 		ret  int32
 		size uint64
 	)
-	print("newosproc")
 
 	if pthread_attr_init(&attr) != 0 {
 		throw("pthread_attr_init")
@@ -353,16 +348,18 @@ func semacreate(mp *m) {
 func semasleep(ns int64) int32 {
 	mp := getg().m
 	if ns >= 0 {
-		mp.ts.tv_sec = ns / 1000000000
-		mp.ts.tv_nsec = ns % 1000000000
+		// sem_timedwait requires an absolute timeout.
+		var now timespec
+		sysvicall2(&libc_clock_gettime, CLOCK_REALTIME, uintptr(unsafe.Pointer(&now)))
+		mp.ts.tv_sec = now.tv_sec + ns/1e9
+		mp.ts.tv_nsec = now.tv_nsec + ns%1e9
 
-		mp.libcall.fn = uintptr(unsafe.Pointer(&libc_sem_timedwait))
-		mp.libcall.n = 2
-		mp.scratch = mscratch{}
-		mp.scratch.v[0] = mp.waitsema
-		mp.scratch.v[1] = uintptr(unsafe.Pointer(&mp.ts))
-		mp.libcall.args = uintptr(unsafe.Pointer(&mp.scratch))
-		asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&mp.libcall))
+		// Handle nanosecond overflow.
+		if mp.ts.tv_nsec >= 1e9 {
+			mp.ts.tv_sec++
+			mp.ts.tv_nsec -= 1e9
+		}
+		sysvicall2(&libc_sem_timedwait, mp.waitsema, uintptr(unsafe.Pointer(&mp.ts)))
 		if *mp.perrno != 0 {
 			if *mp.perrno == _ETIMEDOUT || *mp.perrno == _EAGAIN || *mp.perrno == _EINTR {
 				return -1
@@ -372,13 +369,7 @@ func semasleep(ns int64) int32 {
 		return 0
 	}
 	for {
-		mp.libcall.fn = uintptr(unsafe.Pointer(&libc_sem_wait))
-		mp.libcall.n = 1
-		mp.scratch = mscratch{}
-		mp.scratch.v[0] = mp.waitsema
-		mp.libcall.args = uintptr(unsafe.Pointer(&mp.scratch))
-		asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&mp.libcall))
-		if mp.libcall.r1 == 0 {
+		if sysvicall1(&libc_sem_wait, mp.waitsema) == 0 {
 			break
 		}
 		if *mp.perrno == _EINTR {
@@ -630,7 +621,6 @@ const (
 )
 
 func sysauxv(auxv []uintptr) (pairs int) {
-	print("sysauxv")
 	var i int
 	for i = 0; auxv[i] != _AT_NULL; i += 2 {
 		tag, val := auxv[i], auxv[i+1]
