@@ -16,7 +16,7 @@ import (
 var Args []string
 
 func init() {
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == "windows" || runtime.GOOS == "redox" {
 		// Initialized in exec_windows.go.
 		return
 	}

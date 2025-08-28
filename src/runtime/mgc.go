@@ -177,13 +177,11 @@ func heapObjectsCanMove() bool {
 }
 
 func gcinit() {
-	print("startgc")
 	if unsafe.Sizeof(workbuf{}) != _WorkbufSize {
 		throw("size of Workbuf is suboptimal")
 	}
 	// No sweep on the first cycle.
 	sweep.active.state.Store(sweepDrainedMask)
-	print("initgc")
 
 	// Initialize GC pacer state.
 	// Use the environment variable GOGC for the initial gcPercent value.
@@ -194,7 +192,6 @@ func gcinit() {
 	for i := range cleanupBlockPtrMask {
 		cleanupBlockPtrMask[i] = 0xff
 	}
-	print("lockgc")
 
 	work.startSema = 1
 	work.markDoneSema = 1
@@ -210,7 +207,6 @@ func gcinit() {
 // It kicks off the background sweeper goroutine, the background
 // scavenger goroutine, and enables GC.
 func gcenable() {
-	print("gcenable")
 
 	// Kick off sweeping and scavenging.
 	c := make(chan int, 2)

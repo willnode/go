@@ -217,6 +217,14 @@ func readRandom(r []byte) int {
 }
 
 func goenvs() {
+	print("argv detect start\n")
+
+	n := int32(0)
+	for argv_index(argv, argc+1+n) != nil {
+		print("argv detected\n")
+		n++
+	}
+
 	goenvs_unix()
 }
 
