@@ -182,7 +182,7 @@ func newosproc(mp *m) {
 		throw("pthread_attr_getstack")
 	}
 	mp.g0.stack.lo = mp.g0.stack.hi - uintptr(size)
-	if pthread_attr_setdetachstate(&attr, _PTHREAD_CREATE_DETACHED) != 0 {
+	if pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED) != 0 {
 		throw("pthread_attr_setdetachstate")
 	}
 
@@ -212,10 +212,13 @@ var urandom_dev = []byte("/scheme/rand\x00")
 
 //go:nosplit
 func readRandom(r []byte) int {
-	fd := open(&urandom_dev[0], 0 /* O_RDONLY */, 0)
-	n := read(fd, unsafe.Pointer(&r[0]), int32(len(r)))
-	closefd(fd)
-	return int(n)
+	// broken
+	// print("readrandom")
+	// fd := open(&urandom_dev[0], _O_RDONLY, 0)
+	// n := read(fd, unsafe.Pointer(&r[0]), int32(len(r)))
+	// closefd(fd)
+	// return int(n)
+	return 0
 }
 
 func goenvs() {
@@ -441,7 +444,7 @@ func munmap(addr unsafe.Pointer, n uintptr) {
 //go:nosplit
 func nanotime1() int64 {
 	var ts timespec
-	sysvicall2(&libc_clock_gettime, _CLOCK_MONOTONIC, uintptr(unsafe.Pointer(&ts)))
+	sysvicall2(&libc_clock_gettime, CLOCK_MONOTONIC, uintptr(unsafe.Pointer(&ts)))
 	return ts.tv_sec*1e9 + ts.tv_nsec
 }
 
@@ -562,7 +565,7 @@ func usleep(µs uint32) {
 
 func walltime() (sec int64, nsec int32) {
 	var ts timespec
-	sysvicall2(&libc_clock_gettime, _CLOCK_REALTIME, uintptr(unsafe.Pointer(&ts)))
+	sysvicall2(&libc_clock_gettime, CLOCK_REALTIME, uintptr(unsafe.Pointer(&ts)))
 	return ts.tv_sec, int32(ts.tv_nsec)
 }
 

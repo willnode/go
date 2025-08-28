@@ -10,12 +10,24 @@ const (
 )
 
 const (
-	_O_RDONLY   = 0x0
-	_O_WRONLY   = 0x1
-	_O_CREAT    = 0x40
-	_O_TRUNC    = 0x200
-	_O_NONBLOCK = 0x800
-	_O_CLOEXEC  = 0x80000
+	_O_RDONLY    = 0x00010000
+	_O_WRONLY    = 0x00020000
+	_O_RDWR      = 0x00030000
+	_O_ACCMODE   = 0x00030000
+	_O_NONBLOCK  = 0x00040000
+	_O_APPEND    = 0x00080000
+	_O_SHLOCK    = 0x00100000
+	_O_EXLOCK    = 0x00200000
+	_O_ASYNC     = 0x00400000
+	_O_FSYNC     = 0x00800000
+	_O_SYNC      = _O_FSYNC
+	_O_CLOEXEC   = 0x01000000
+	_O_CREAT     = 0x02000000
+	_O_TRUNC     = 0x04000000
+	_O_EXCL      = 0x08000000
+	_O_DIRECTORY = 0x10000000
+	_O_PATH      = 0x20000000
+	_O_SYMLINK   = 0x40000000
 )
 
 // Standard signal-related constants.
@@ -24,7 +36,7 @@ const (
 	_SIG_BLOCK   = 1
 	_SIG_UNBLOCK = 2
 	_SIG_SETMASK = 3
-	_NSIG        = 128 // Increased to match sigset size.
+	_NSIG        = 32
 	_SI_USER     = 0
 	_UC_SIGMASK  = 0x01
 	_UC_CPU      = 0x04
@@ -84,18 +96,15 @@ const (
 
 // Standard error and clock constants.
 const (
-	_CLOCK_REALTIME  = 0
-	_CLOCK_MONOTONIC = 3
+	CLOCK_REALTIME  = 0
+	CLOCK_MONOTONIC = 4
 
-	_TIMER_RELTIME = 0
-	_TIMER_ABSTIME = 1
-
-	_PTHREAD_CREATE_DETACHED = 1
+	PTHREAD_CREATE_DETACHED = 0
 
 	_SC_NPROCESSORS_ONLN = 58
 	_SC_PAGESIZE         = 30
 
-	_MAXHOSTNAMELEN = 0x100
+	_MAXHOSTNAMELEN = 0x40
 )
 
 //
@@ -157,16 +166,13 @@ const (
 	_ETIMEDOUT = 60
 
 	_PROT_NONE  = 0x0
-	_PROT_READ  = 0x1
+	_PROT_READ  = 0x4
 	_PROT_WRITE = 0x2
-	_PROT_EXEC  = 0x4
+	_PROT_EXEC  = 0x1
 
 	_MAP_ANON    = 0x20
 	_MAP_PRIVATE = 0x2
-	_MAP_FIXED   = 0x10
-
-	_SI_KERNEL = 0x80
-	_SI_TIMER  = -0x2
+	_MAP_FIXED   = 0x4
 
 	_SIGRTMIN = 0x20
 

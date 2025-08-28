@@ -234,10 +234,6 @@ needtls:
 	// skip TLS setup on Plan 9
 	JMP ok
 #endif
-#ifdef GOOS_redox
-	// skip TLS setup on Redox
-	JMP ok
-#endif
 #ifdef GOOS_solaris
 	// skip TLS setup on Solaris
 	JMP ok
