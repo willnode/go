@@ -276,10 +276,11 @@ func forkAndExecInChild(argv0 *byte, argv, envv []*byte, chroot, dir *byte, attr
 
 	// Detach fd 0 from tty
 	if sys.Noctty {
-		err1 = ioctl(0, uintptr(TIOCNOTTY), 0)
-		if err1 != 0 {
-			goto childerror
-		}
+		panic("TIOCNOTTY TODO REDOX")
+		// err1 = ioctl(0, uintptr(TIOCNOTTY), 0)
+		// if err1 != 0 {
+		// 	goto childerror
+		// }
 	}
 
 	// Set the controlling TTY to Ctty

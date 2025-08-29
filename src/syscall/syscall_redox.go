@@ -14,9 +14,6 @@ package syscall
 
 import "unsafe"
 
-const F_DUP2FD_CLOEXEC = 0x30
-const _F_DUP2FD_CLOEXEC = F_DUP2FD_CLOEXEC
-
 func Syscall(trap, a1, a2, a3 uintptr) (r1, r2 uintptr, err Errno)
 func Syscall6(trap, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errno)
 func RawSyscall(trap, a1, a2, a3 uintptr) (r1, r2 uintptr, err Errno)
@@ -25,17 +22,6 @@ func RawSyscall6(trap, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errn
 // Implemented in asm_redox_amd64.s.
 func rawSysvicall6(trap, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errno)
 func sysvicall6(trap, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errno)
-
-type SockaddrDatalink struct {
-	Family uint16
-	Index  uint16
-	Type   uint8
-	Nlen   uint8
-	Alen   uint8
-	Slen   uint8
-	Data   [244]int8
-	raw    RawSockaddrDatalink
-}
 
 func direntIno(buf []byte) (uint64, bool) {
 	return readInt(buf, unsafe.Offsetof(Dirent{}.Ino), unsafe.Sizeof(Dirent{}.Ino))
@@ -72,24 +58,10 @@ func Pipe2(p []int, flags int) error {
 	return err
 }
 
-//sys   accept4(s int, rsa *RawSockaddrAny, addrlen *_Socklen, flags int) (fd int, err error) = libsocket.accept4
+//TODO sys   accept4(s int, rsa *RawSockaddrAny, addrlen *_Socklen, flags int) (fd int, err error) = libc.accept4
 
 func Accept4(fd int, flags int) (int, Sockaddr, error) {
-	var rsa RawSockaddrAny
-	var addrlen _Socklen = SizeofSockaddrAny
-	nfd, err := accept4(fd, &rsa, &addrlen, flags)
-	if err != nil {
-		return 0, nil, err
-	}
-	if addrlen > SizeofSockaddrAny {
-		panic("RawSockaddrAny too small")
-	}
-	sa, err := anyToSockaddr(&rsa)
-	if err != nil {
-		Close(nfd)
-		return 0, nil, err
-	}
-	return nfd, sa, nil
+	panic("accept4 TODO")
 }
 
 func (sa *SockaddrInet4) sockaddr() (unsafe.Pointer, _Socklen, error) {
@@ -215,9 +187,7 @@ func Setgroups(gids []int) (err error) {
 }
 
 func ReadDirent(fd int, buf []byte) (n int, err error) {
-	// Final argument is (basep *uintptr) and the syscall doesn't take nil.
-	// TODO(rsc): Can we use a single global basep for all calls?
-	return Getdents(fd, buf, new(uintptr))
+	panic("getdents TODO")
 }
 
 // Wait status is 7 bits at bottom, either 0 (exited),
@@ -292,10 +262,7 @@ func Gethostname() (name string, err error) {
 }
 
 func UtimesNano(path string, ts []Timespec) error {
-	if len(ts) != 2 {
-		return EINVAL
-	}
-	return utimensat(_AT_FDCWD, path, (*[2]Timespec)(unsafe.Pointer(&ts[0])), 0)
+	panic("utimensat TODO")
 }
 
 //sys	fcntl(fd int, cmd int, arg int) (val int, err error)
@@ -346,7 +313,7 @@ func anyToSockaddr(rsa *RawSockaddrAny) (Sockaddr, error) {
 	return nil, EAFNOSUPPORT
 }
 
-//sys	accept(s int, rsa *RawSockaddrAny, addrlen *_Socklen) (fd int, err error) = libsocket.accept
+//sys	accept(s int, rsa *RawSockaddrAny, addrlen *_Socklen) (fd int, err error) = libc.accept
 
 func Accept(fd int) (nfd int, sa Sockaddr, err error) {
 	var rsa RawSockaddrAny
@@ -366,51 +333,51 @@ func Accept(fd int) (nfd int, sa Sockaddr, err error) {
 func recvmsgRaw(fd int, p, oob []byte, flags int, rsa *RawSockaddrAny) (n, oobn int, recvflags int, err error) {
 	var msg Msghdr
 	msg.Name = (*byte)(unsafe.Pointer(rsa))
-	msg.Namelen = uint32(SizeofSockaddrAny)
+	msg.Namelen = SizeofSockaddrAny
 	var iov Iovec
 	if len(p) > 0 {
-		iov.Base = (*int8)(unsafe.Pointer(&p[0]))
+		iov.Base = (*byte)(unsafe.Pointer(&p[0]))
 		iov.SetLen(len(p))
 	}
-	var dummy int8
+	var dummy byte
 	if len(oob) > 0 {
 		// receive at least one normal byte
 		if len(p) == 0 {
 			iov.Base = &dummy
 			iov.SetLen(1)
 		}
-		msg.Accrights = (*int8)(unsafe.Pointer(&oob[0]))
-		msg.Accrightslen = int32(len(oob))
+		// msg.Accrights = (*int8)(unsafe.Pointer(&oob[0]))
+		// msg.Accrightslen = int32(len(oob))
 	}
 	msg.Iov = &iov
 	msg.Iovlen = 1
 	if n, err = recvmsg(fd, &msg, flags); err != nil {
 		return
 	}
-	oobn = int(msg.Accrightslen)
+	// oobn = int(msg.Accrightslen)
 	return
 }
 
-//sys	sendmsg(s int, msg *Msghdr, flags int) (n int, err error) = libsocket.__xnet_sendmsg
+//sys	sendmsg(s int, msg *Msghdr, flags int) (n int, err error) = libc.sendmsg
 
 func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags int) (n int, err error) {
 	var msg Msghdr
 	msg.Name = (*byte)(unsafe.Pointer(ptr))
-	msg.Namelen = uint32(salen)
+	msg.Namelen = uint64(salen)
 	var iov Iovec
 	if len(p) > 0 {
-		iov.Base = (*int8)(unsafe.Pointer(&p[0]))
+		iov.Base = (*byte)(unsafe.Pointer(&p[0]))
 		iov.SetLen(len(p))
 	}
-	var dummy int8
+	var dummy byte
 	if len(oob) > 0 {
 		// send at least one normal byte
 		if len(p) == 0 {
 			iov.Base = &dummy
 			iov.SetLen(1)
 		}
-		msg.Accrights = (*int8)(unsafe.Pointer(&oob[0]))
-		msg.Accrightslen = int32(len(oob))
+		// msg.Accrights = (*int8)(unsafe.Pointer(&oob[0]))
+		// msg.Accrightslen = int32(len(oob))
 	}
 	msg.Iov = &iov
 	msg.Iovlen = 1
@@ -439,7 +406,7 @@ func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags i
 //sys	Fchown(fd int, uid int, gid int) (err error)
 //sys	Fpathconf(fd int, name int) (val int, err error)
 //sys	Fstat(fd int, stat *Stat_t) (err error)
-//sys	Getdents(fd int, buf []byte, basep *uintptr) (n int, err error)
+//TODO sys	Getdents(fd int, buf []byte, basep *uintptr) (n int, err error)
 //sysnb	Getgid() (gid int)
 //sysnb	Getpid() (pid int)
 //sys	Geteuid() (euid int)
@@ -453,7 +420,7 @@ func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags i
 //sys	Kill(pid int, signum Signal) (err error)
 //sys	Lchown(path string, uid int, gid int) (err error)
 //sys	Link(path string, link string) (err error)
-//sys	Listen(s int, backlog int) (err error) = libsocket.__xnet_listen
+//sys	Listen(s int, backlog int) (err error) = libc.listen
 //sys	Lstat(path string, stat *Stat_t) (err error)
 //sys	Mkdir(path string, mode uint32) (err error)
 //sys	Mknod(path string, mode uint32, dev int) (err error)
@@ -478,7 +445,7 @@ func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags i
 //sysnb	setrlimit(which int, lim *Rlimit) (err error)
 //sysnb	Setsid() (pid int, err error)
 //sysnb	Setuid(uid int) (err error)
-//sys	Shutdown(s int, how int) (err error) = libsocket.shutdown
+//sys	Shutdown(s int, how int) (err error) = libc.shutdown
 //sys	Stat(path string, stat *Stat_t) (err error)
 //sys	Symlink(path string, link string) (err error)
 //sys	Sync() (err error)
@@ -488,23 +455,23 @@ func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags i
 //sys	Umask(newmask int) (oldmask int)
 //sys	Unlink(path string) (err error)
 //sys	utimes(path string, times *[2]Timeval) (err error)
-//sys	bind(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) = libsocket.__xnet_bind
-//sys	connect(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) = libsocket.__xnet_connect
+//sys	bind(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) = libc.bind
+//sys	connect(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) = libc.connect
 //sys	mmap(addr uintptr, length uintptr, prot int, flag int, fd int, pos int64) (ret uintptr, err error)
 //sys	munmap(addr uintptr, length uintptr) (err error)
-//sys	sendto(s int, buf []byte, flags int, to unsafe.Pointer, addrlen _Socklen) (err error) = libsocket.__xnet_sendto
-//sys	socket(domain int, typ int, proto int) (fd int, err error) = libsocket.__xnet_socket
-//sysnb	socketpair(domain int, typ int, proto int, fd *[2]int32) (err error) = libsocket.__xnet_socketpair
+//sys	sendto(s int, buf []byte, flags int, to unsafe.Pointer, addrlen _Socklen) (err error) = libc.sendto
+//sys	socket(domain int, typ int, proto int) (fd int, err error) = libc.socket
+//sysnb	socketpair(domain int, typ int, proto int, fd *[2]int32) (err error) = libc.socketpair
 //sys	write(fd int, p []byte) (n int, err error)
 //sys	writev(fd int, iovecs []Iovec) (n uintptr, err error)
-//sys	getsockopt(s int, level int, name int, val unsafe.Pointer, vallen *_Socklen) (err error) = libsocket.__xnet_getsockopt
-//sysnb	getpeername(fd int, rsa *RawSockaddrAny, addrlen *_Socklen) (err error) = libsocket.getpeername
-//sys	getsockname(fd int, rsa *RawSockaddrAny, addrlen *_Socklen) (err error) = libsocket.getsockname
-//sys	setsockopt(s int, level int, name int, val unsafe.Pointer, vallen uintptr) (err error) = libsocket.setsockopt
-//sys	recvfrom(fd int, p []byte, flags int, from *RawSockaddrAny, fromlen *_Socklen) (n int, err error) = libsocket.recvfrom
-//sys	recvmsg(s int, msg *Msghdr, flags int) (n int, err error) = libsocket.__xnet_recvmsg
+//sys	getsockopt(s int, level int, name int, val unsafe.Pointer, vallen *_Socklen) (err error) = libc.getsockopt
+//sysnb	getpeername(fd int, rsa *RawSockaddrAny, addrlen *_Socklen) (err error) = libc.getpeername
+//sys	getsockname(fd int, rsa *RawSockaddrAny, addrlen *_Socklen) (err error) = libc.getsockname
+//sys	setsockopt(s int, level int, name int, val unsafe.Pointer, vallen uintptr) (err error) = libc.setsockopt
+//sys	recvfrom(fd int, p []byte, flags int, from *RawSockaddrAny, fromlen *_Socklen) (n int, err error) = libc.recvfrom
+//sys	recvmsg(s int, msg *Msghdr, flags int) (n int, err error) = libc.recvmsg
 //sys	getexecname() (path unsafe.Pointer, err error) = libc.getexecname
-//sys	utimensat(dirfd int, path string, times *[2]Timespec, flag int) (err error)
+//TODO sys	utimensat(dirfd int, path string, times *[2]Timespec, flag int) (err error)
 
 func Getexecname() (path string, err error) {
 	ptr, err := getexecname()
@@ -549,3 +516,15 @@ func Utimes(path string, tv []Timeval) error {
 	}
 	return utimes(path, (*[2]Timeval)(unsafe.Pointer(&tv[0])))
 }
+
+// Not implemented in Redox
+
+type ICMPv6Filter struct {
+	Filt [8]uint32
+}
+
+const SizeofICMPv6Filter = 0x20
+
+const F_DUP2FD_CLOEXEC = 0x30
+const _F_DUP2FD_CLOEXEC = F_DUP2FD_CLOEXEC
+const F_DUPFD_CLOEXEC = 0

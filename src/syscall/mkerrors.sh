@@ -215,19 +215,13 @@ includes_Redox='
 #include <limits.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/sockio.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
-#include <net/bpf.h>
 #include <net/if.h>
-#include <net/if_arp.h>
-#include <net/if_types.h>
-#include <net/route.h>
 #include <netinet/in.h>
 #include <termios.h>
 #include <netinet/ip.h>
-#include <netinet/ip_mroute.h>
 '
 
 includes_SunOS='

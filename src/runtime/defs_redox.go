@@ -13,148 +13,128 @@ GOARCH=amd64 go tool cgo -cdefs defs_redox.go >defs_redox_amd64.h
 package runtime
 
 /*
-#include <sys/types.h>
+#include <sys/epoll.h>
 #include <sys/mman.h>
 #include <sys/select.h>
-#include <sys/siginfo.h>
-#include <sys/signal.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/ucontext.h>
-#include <sys/regset.h>
-#include <sys/unistd.h>
-#include <sys/fork.h>
-#include <sys/port.h>
+#include <fcntl.h>
 #include <semaphore.h>
 #include <errno.h>
 #include <signal.h>
 #include <pthread.h>
 #include <netdb.h>
+#include <unistd.h>
 */
 import "C"
 
 const (
-	EINTR       = C.EINTR
-	EBADF       = C.EBADF
-	EFAULT      = C.EFAULT
-	EAGAIN      = C.EAGAIN
-	EBUSY       = C.EBUSY
-	ETIME       = C.ETIME
-	ETIMEDOUT   = C.ETIMEDOUT
-	EWOULDBLOCK = C.EWOULDBLOCK
-	EINPROGRESS = C.EINPROGRESS
+	_EINTR       = C.EINTR
+	_EBADF       = C.EBADF
+	_EFAULT      = C.EFAULT
+	_EAGAIN      = C.EAGAIN
+	_EBUSY       = C.EBUSY
+	_ETIME       = C.ETIME
+	_ETIMEDOUT   = C.ETIMEDOUT
+	_EWOULDBLOCK = C.EWOULDBLOCK
+	_EINPROGRESS = C.EINPROGRESS
 
-	PROT_NONE  = C.PROT_NONE
-	PROT_READ  = C.PROT_READ
-	PROT_WRITE = C.PROT_WRITE
-	PROT_EXEC  = C.PROT_EXEC
+	_PROT_NONE  = C.PROT_NONE
+	_PROT_READ  = C.PROT_READ
+	_PROT_WRITE = C.PROT_WRITE
+	_PROT_EXEC  = C.PROT_EXEC
 
-	MAP_ANON    = C.MAP_ANON
-	MAP_PRIVATE = C.MAP_PRIVATE
-	MAP_FIXED   = C.MAP_FIXED
+	_MAP_ANON    = C.MAP_ANON
+	_MAP_PRIVATE = C.MAP_PRIVATE
+	_MAP_FIXED   = C.MAP_FIXED
 
-	MADV_DONTNEED = C.MADV_DONTNEED
-	MADV_FREE     = C.MADV_FREE
+	_MADV_DONTNEED = C.MADV_DONTNEED
 
-	SA_SIGINFO = C.SA_SIGINFO
-	SA_RESTART = C.SA_RESTART
-	SA_ONSTACK = C.SA_ONSTACK
+	_SA_SIGINFO = C.SA_SIGINFO
+	_SA_RESTART = C.SA_RESTART
+	_SA_ONSTACK = C.SA_ONSTACK
 
-	SIGHUP    = C.SIGHUP
-	SIGINT    = C.SIGINT
-	SIGQUIT   = C.SIGQUIT
-	SIGILL    = C.SIGILL
-	SIGTRAP   = C.SIGTRAP
-	SIGABRT   = C.SIGABRT
-	SIGEMT    = C.SIGEMT
-	SIGFPE    = C.SIGFPE
-	SIGKILL   = C.SIGKILL
-	SIGBUS    = C.SIGBUS
-	SIGSEGV   = C.SIGSEGV
-	SIGSYS    = C.SIGSYS
-	SIGPIPE   = C.SIGPIPE
-	SIGALRM   = C.SIGALRM
-	SIGTERM   = C.SIGTERM
-	SIGURG    = C.SIGURG
-	SIGSTOP   = C.SIGSTOP
-	SIGTSTP   = C.SIGTSTP
-	SIGCONT   = C.SIGCONT
-	SIGCHLD   = C.SIGCHLD
-	SIGTTIN   = C.SIGTTIN
-	SIGTTOU   = C.SIGTTOU
-	SIGIO     = C.SIGIO
-	SIGXCPU   = C.SIGXCPU
-	SIGXFSZ   = C.SIGXFSZ
-	SIGVTALRM = C.SIGVTALRM
-	SIGPROF   = C.SIGPROF
-	SIGWINCH  = C.SIGWINCH
-	SIGUSR1   = C.SIGUSR1
-	SIGUSR2   = C.SIGUSR2
+	// _FPE_INTDIV = C.FPE_INTDIV
+	// _FPE_INTOVF = C.FPE_INTOVF
+	// _FPE_FLTDIV = C.FPE_FLTDIV
+	// _FPE_FLTOVF = C.FPE_FLTOVF
+	// _FPE_FLTUND = C.FPE_FLTUND
+	// _FPE_FLTRES = C.FPE_FLTRES
+	// _FPE_FLTINV = C.FPE_FLTINV
+	// _FPE_FLTSUB = C.FPE_FLTSUB
 
-	FPE_INTDIV = C.FPE_INTDIV
-	FPE_INTOVF = C.FPE_INTOVF
-	FPE_FLTDIV = C.FPE_FLTDIV
-	FPE_FLTOVF = C.FPE_FLTOVF
-	FPE_FLTUND = C.FPE_FLTUND
-	FPE_FLTRES = C.FPE_FLTRES
-	FPE_FLTINV = C.FPE_FLTINV
-	FPE_FLTSUB = C.FPE_FLTSUB
+	_SIGHUP    = C.SIGHUP
+	_SIGINT    = C.SIGINT
+	_SIGQUIT   = C.SIGQUIT
+	_SIGILL    = C.SIGILL
+	_SIGTRAP   = C.SIGTRAP
+	_SIGABRT   = C.SIGABRT
+	_SIGFPE    = C.SIGFPE
+	_SIGKILL   = C.SIGKILL
+	_SIGBUS    = C.SIGBUS
+	_SIGSEGV   = C.SIGSEGV
+	_SIGSYS    = C.SIGSYS
+	_SIGPIPE   = C.SIGPIPE
+	_SIGALRM   = C.SIGALRM
+	_SIGTERM   = C.SIGTERM
+	_SIGURG    = C.SIGURG
+	_SIGSTOP   = C.SIGSTOP
+	_SIGTSTP   = C.SIGTSTP
+	_SIGCONT   = C.SIGCONT
+	_SIGCHLD   = C.SIGCHLD
+	_SIGTTIN   = C.SIGTTIN
+	_SIGTTOU   = C.SIGTTOU
+	_SIGIO     = C.SIGIO
+	_SIGXCPU   = C.SIGXCPU
+	_SIGXFSZ   = C.SIGXFSZ
+	_SIGVTALRM = C.SIGVTALRM
+	_SIGPROF   = C.SIGPROF
+	_SIGWINCH  = C.SIGWINCH
+	_SIGUSR1   = C.SIGUSR1
+	_SIGUSR2   = C.SIGUSR2
 
-	BUS_ADRALN = C.BUS_ADRALN
-	BUS_ADRERR = C.BUS_ADRERR
-	BUS_OBJERR = C.BUS_OBJERR
+	// _BUS_ADRALN = C.BUS_ADRALN
+	// _BUS_ADRERR = C.BUS_ADRERR
+	// _BUS_OBJERR = C.BUS_OBJERR
 
-	SEGV_MAPERR = C.SEGV_MAPERR
-	SEGV_ACCERR = C.SEGV_ACCERR
+	// _SEGV_MAPERR = C.SEGV_MAPERR
+	// _SEGV_ACCERR = C.SEGV_ACCERR
 
-	ITIMER_REAL    = C.ITIMER_REAL
-	ITIMER_VIRTUAL = C.ITIMER_VIRTUAL
-	ITIMER_PROF    = C.ITIMER_PROF
+	_ITIMER_REAL    = C.ITIMER_REAL
+	_ITIMER_VIRTUAL = C.ITIMER_VIRTUAL
+	_ITIMER_PROF    = C.ITIMER_PROF
 
-	_SC_NPROCESSORS_ONLN = C._SC_NPROCESSORS_ONLN
+	_O_RDONLY   = C.O_RDONLY
+	_O_WRONLY   = C.O_WRONLY
+	_O_NONBLOCK = C.O_NONBLOCK
+	_O_CREAT    = C.O_CREAT
+	_O_TRUNC    = C.O_TRUNC
 
-	PTHREAD_CREATE_DETACHED = C.PTHREAD_CREATE_DETACHED
+	__SC_NPROCESSORS_ONLN = C._SC_NPROCESSORS_ONLN
 
-	FORK_NOSIGCHLD = C.FORK_NOSIGCHLD
-	FORK_WAITPID   = C.FORK_WAITPID
+	_PTHREAD_CREATE_DETACHED = C.PTHREAD_CREATE_DETACHED
 
-	MAXHOSTNAMELEN = C.MAXHOSTNAMELEN
-
-	O_WRONLY   = C.O_WRONLY
-	O_NONBLOCK = C.O_NONBLOCK
-	O_CREAT    = C.O_CREAT
-	O_TRUNC    = C.O_TRUNC
-	O_CLOEXEC  = C.O_CLOEXEC
-
-	POLLIN  = C.POLLIN
-	POLLOUT = C.POLLOUT
-	POLLHUP = C.POLLHUP
-	POLLERR = C.POLLERR
-
-	PORT_SOURCE_FD    = C.PORT_SOURCE_FD
-	PORT_SOURCE_ALERT = C.PORT_SOURCE_ALERT
-	PORT_ALERT_UPDATE = C.PORT_ALERT_UPDATE
+	_EPOLLIN  = C.EPOLLIN
+	_EPOLLOUT = C.EPOLLOUT
+	_EPOLLHUP = C.EPOLLHUP
+	_EPOLLERR = C.EPOLLERR
 )
 
-type SemT C.sem_t
+type pthread_t C.pthread_t
+type pthread_attr_t C.pthread_attr_t
+type pthread_cond_t C.pthread_cond_t
+type pthread_mutex_t C.pthread_mutex_t
 
-type Sigset C.sigset_t
-type StackT C.stack_t
+type sigset C.sigset_t
+type siginfo C.siginfo_t
+type sem_t C.sem_t
+type stackt C.stack_t
+type sigactiont C.struct_sigaction
 
-type Siginfo C.siginfo_t
-type Sigaction C.struct_sigaction
+type timespec C.struct_timespec
+type timeval C.struct_timeval
+type itimerval C.struct_itimerval
 
-type Fpregset C.fpregset_t
-type Mcontext C.mcontext_t
-type Ucontext C.ucontext_t
-
-type Timespec C.struct_timespec
-type Timeval C.struct_timeval
-type Itimerval C.struct_itimerval
-
-type PortEvent C.port_event_t
-type Pthread C.pthread_t
-type PthreadAttr C.pthread_attr_t
-
-// depends on Timespec, must appear below
-type Stat C.struct_stat
+type mcontext C.mcontext_t
+type ucontext C.ucontext_t
