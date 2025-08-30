@@ -90,10 +90,11 @@ func newFileFromNewFile(fd uintptr, name string) *File {
 		return nil
 	}
 
-	flags, err := unix.Fcntl(fdi, syscall.F_GETFL, 0)
-	if err != nil {
-		flags = 0
-	}
+	// page fault in redox
+	// flags, err := unix.Fcntl(fdi, syscall.F_GETFL, 0)
+	// if err != nil {
+	flags := 0
+	// }
 	f := newFile(fdi, name, kindNewFile, unix.HasNonblockFlag(flags))
 	f.appendMode = flags&syscall.O_APPEND != 0
 	return f

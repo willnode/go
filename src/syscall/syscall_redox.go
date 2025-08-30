@@ -123,7 +123,8 @@ func Getsockname(fd int) (sa Sockaddr, err error) {
 	return anyToSockaddr(&rsa)
 }
 
-const ImplementsGetwd = true
+// TODO: Page fault in redox
+const ImplementsGetwd = false
 
 //sys	Getcwd(buf []byte) (n int, err error)
 

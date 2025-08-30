@@ -224,6 +224,11 @@ func main() {
 // cmdIsGoTelemetryOff reports whether the command is "go telemetry off". This
 // is used to decide whether to disable the opening of counter files. See #69269.
 func cmdIsGoTelemetryOff() bool {
+	// redox don't pass args here yet, so this if will panic
+	if len(os.Args) == 0 {
+		return true
+	}
+
 	restArgs := os.Args[1:]
 	// skipChdirFlag skips the -C flag, which is the only flag that can appear
 	// in a valid 'go telemetry off' command, and which hasn't been processed
@@ -382,6 +387,9 @@ func maybeStartTrace(pctx context.Context) context.Context {
 //  2. A toolchain switch later on reinvokes the new go command with the same arguments.
 //     The parent toolchain has already done the chdir; the child must not try to do it again.
 func handleChdirFlag() {
+	if len(os.Args) == 0 {
+		return
+	}
 	_, used := lookupCmd(os.Args[1:])
 	used++ // because of [1:]
 	if used >= len(os.Args) {
