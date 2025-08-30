@@ -6,10 +6,45 @@ package runtime
 
 import "unsafe"
 
+//go:cgo_import_dynamic libc_chdir chdir "libc.so"
+//go:cgo_import_dynamic libc_chroot chroot "libc.so"
+//go:cgo_import_dynamic libc_close close "libc.so"
+//go:cgo_import_dynamic libc_dup2 execve "libc.so"
+//go:cgo_import_dynamic libc_execve execve "libc.so"
+//go:cgo_import_dynamic libc_fcntl fcntl "libc.so"
+//go:cgo_import_dynamic libc_gethostname gethostname "libc.so"
+//go:cgo_import_dynamic libc_getpid getpid "libc.so"
+//go:cgo_import_dynamic libc_ioctl ioctl "libc.so"
+//go:cgo_import_dynamic libc_setgid setgid "libc.so"
+//go:cgo_import_dynamic libc_setgroups setgroups "libc.so"
+//go:cgo_import_dynamic libc_setrlimit setrlimit "libc.so"
+//go:cgo_import_dynamic libc_setsid setsid "libc.so"
+//go:cgo_import_dynamic libc_setuid setuid "libc.so"
+//go:cgo_import_dynamic libc_setpgid setpgid "libc.so"
+//go:cgo_import_dynamic libc_issetugid issetugid "libc.so"
+
+//go:linkname libc_chdir libc_chdir
+//go:linkname libc_chroot libc_chroot
+//go:linkname libc_close libc_close
+//go:linkname libc_dup2 libc_dup2
+//go:linkname libc_execve libc_execve
+//go:linkname libc_fcntl libc_fcntl
+//go:linkname libc_gethostname libc_gethostname
+//go:linkname libc_getpid libc_getpid
+//go:linkname libc_ioctl libc_ioctl
+//go:linkname libc_setgid libc_setgid
+//go:linkname libc_setgroups libc_setgroups
+//go:linkname libc_setrlimit libc_setrlimit
+//go:linkname libc_setsid libc_setsid
+//go:linkname libc_setuid libc_setuid
+//go:linkname libc_setpgid libc_setpgid
+//go:linkname libc_issetugid libc_issetugid
+
 var (
 	libc_chdir,
 	libc_chroot,
 	libc_close,
+	libc_dup2,
 	libc_execve,
 	libc_fcntl,
 	libc_gethostname,
@@ -96,7 +131,13 @@ const _F_DUP2FD = 0x9
 //go:nosplit
 //go:linkname syscall_dup2
 func syscall_dup2(oldfd, newfd uintptr) (val, err uintptr) {
-	return syscall_fcntl(oldfd, _F_DUP2FD, newfd)
+	call := libcall{
+		fn:   uintptr(unsafe.Pointer(&libc_dup2)),
+		n:    3,
+		args: uintptr(unsafe.Pointer(&oldfd)),
+	}
+	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
+	return call.r1, call.err
 }
 
 //go:nosplit
