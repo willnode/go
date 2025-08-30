@@ -194,7 +194,7 @@ func main() {
 		throw("nanotime returning zero")
 	}
 
-	if debug.inittrace != 0 || GOOS == "redox" {
+	if debug.inittrace != 0 {
 		inittrace.id = getg().goid
 		inittrace.active = true
 	}
