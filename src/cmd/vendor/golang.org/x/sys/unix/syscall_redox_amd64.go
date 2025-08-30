@@ -11,7 +11,7 @@ func setTimespec(sec, nsec int64) Timespec {
 }
 
 func setTimeval(sec, usec int64) Timeval {
-	return Timeval{Sec: sec, Usec: usec}
+	return Timeval{Sec: sec, Usec: int32(usec)}
 }
 
 func (iov *Iovec) SetLen(length int) {
@@ -19,9 +19,9 @@ func (iov *Iovec) SetLen(length int) {
 }
 
 func (msghdr *Msghdr) SetIovlen(length int) {
-	msghdr.Iovlen = int32(length)
+	msghdr.Iovlen = uint64(length)
 }
 
 func (cmsg *Cmsghdr) SetLen(length int) {
-	cmsg.Len = uint32(length)
+	cmsg.Len = uint64(length)
 }

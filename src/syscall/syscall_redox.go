@@ -462,6 +462,7 @@ func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags i
 //sys	sendto(s int, buf []byte, flags int, to unsafe.Pointer, addrlen _Socklen) (err error) = libc.sendto
 //sys	socket(domain int, typ int, proto int) (fd int, err error) = libc.socket
 //sysnb	socketpair(domain int, typ int, proto int, fd *[2]int32) (err error) = libc.socketpair
+//sysnb	Uname(buf *Utsname) (err error) = libc.uname
 //sys	write(fd int, p []byte) (n int, err error)
 //sys	writev(fd int, iovecs []Iovec) (n uintptr, err error)
 //sys	getsockopt(s int, level int, name int, val unsafe.Pointer, vallen *_Socklen) (err error) = libc.getsockopt

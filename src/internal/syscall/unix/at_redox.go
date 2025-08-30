@@ -9,6 +9,7 @@ package unix
 
 import (
 	"syscall"
+	"unsafe"
 )
 
 // Implemented as sysvicall6 in runtime/syscall_redox.go.
@@ -17,13 +18,20 @@ func syscall6(trap, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err 
 // Implemented as rawsysvicall6 in runtime/syscall_redox.go.
 func rawSyscall6(trap, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err syscall.Errno)
 
-const (
-	AT_EACCESS          = 0x4
-	AT_FDCWD            = 0xffd19553
-	AT_REMOVEDIR        = 0x1
-	AT_SYMLINK_NOFOLLOW = 0x1000
+//go:linkname procFstatat libc_fstatat
 
+var (
+	procFstatat uintptr
+)
+
+const (
+	AT_FDCWD   = -0x64
 	UTIME_OMIT = -0x2
+
+	// not in relibc, but can be ignored by it
+	AT_SYMLINK_NOFOLLOW = 0x100
+	// not in relibc, and so unlinkat
+	AT_REMOVEDIR = 0x200
 )
 
 func Unlinkat(dirfd int, path string, flags int) error {
@@ -35,7 +43,22 @@ func Openat(dirfd int, path string, flags int, perm uint32) (int, error) {
 }
 
 func Fstatat(dirfd int, path string, stat *syscall.Stat_t, flags int) error {
-	return syscall.ENOSYS
+	p, err := syscall.BytePtrFromString(path)
+	if err != nil {
+		return err
+	}
+
+	_, _, errno := syscall6(uintptr(unsafe.Pointer(&procFstatat)), 4,
+		uintptr(dirfd),
+		uintptr(unsafe.Pointer(p)),
+		uintptr(unsafe.Pointer(stat)),
+		uintptr(flags),
+		0, 0)
+	if errno != 0 {
+		return errno
+	}
+
+	return nil
 }
 
 func Readlinkat(dirfd int, path string, buf []byte) (int, error) {

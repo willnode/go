@@ -220,3 +220,16 @@ type Termios struct {
 	Lflag uint32
 	Cc    [32]uint8
 }
+
+const (
+	_AT_FDCWD = -0x64
+)
+
+type Utsname struct {
+	Sysname    [65]int8
+	Nodename   [65]int8
+	Release    [65]int8
+	Version    [65]int8
+	Machine    [65]int8
+	Domainname [65]int8
+}

@@ -133,6 +133,7 @@ const (
 	IP_TTL				= 0x2
 	ISIG				= 0x80
 	ISTRIP				= 0x20
+	IXANY				= 0x800
 	IXOFF				= 0x400
 	IXON				= 0x200
 	LOCK_EX				= 0x2
@@ -186,6 +187,7 @@ const (
 	O_EXCL				= 0x8000000
 	O_EXLOCK			= 0x200000
 	O_FSYNC				= 0x800000
+	O_NDELAY			= 0x40000
 	O_NOCTTY			= 0x200
 	O_NOFOLLOW			= -0x80000000
 	O_NONBLOCK			= 0x40000
@@ -218,6 +220,7 @@ const (
 	RUSAGE_CHILDREN			= -0x1
 	RUSAGE_SELF			= 0x0
 	RUSAGE_THREAD			= 0x1
+	SCM_CREDENTIALS			= 0x2
 	SCM_RIGHTS			= 0x1
 	SHUT_RD				= 0x0
 	SHUT_RDWR			= 0x2

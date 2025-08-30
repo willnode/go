@@ -32,6 +32,7 @@ package syscall
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/un.h>
+#include <sys/utsname.h>
 #include <sys/wait.h>
 #include <net/if.h>
 #include <netinet/in.h>
@@ -171,3 +172,13 @@ type pollFd C.struct_pollfd
 // Terminal handling
 
 type Termios C.struct_termios
+
+// Misc
+
+const (
+	_AT_FDCWD = C.AT_FDCWD
+	// _AT_REMOVEDIR        = C.AT_REMOVEDIR
+	// _AT_SYMLINK_NOFOLLOW = C.AT_SYMLINK_NOFOLLOW
+)
+
+type Utsname C.struct_utsname
