@@ -97,6 +97,7 @@ func syscall_rawsysvicall6(fn, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2, e
 //go:nosplit
 //go:linkname syscall_chdir
 func syscall_chdir(path uintptr) (err uintptr) {
+	print("bout to asm call libc_chdir\n")
 	call := libcall{
 		fn:   uintptr(unsafe.Pointer(&libc_chdir)),
 		n:    1,
@@ -109,6 +110,7 @@ func syscall_chdir(path uintptr) (err uintptr) {
 //go:nosplit
 //go:linkname syscall_chroot
 func syscall_chroot(path uintptr) (err uintptr) {
+	print("bout to asm call libc_chroot\n")
 	call := libcall{
 		fn:   uintptr(unsafe.Pointer(&libc_chroot)),
 		n:    1,
@@ -142,6 +144,7 @@ func syscall_dup2(oldfd, newfd uintptr) (val, err uintptr) {
 //go:linkname syscall_execve
 //go:cgo_unsafe_args
 func syscall_execve(path, argv, envp uintptr) (err uintptr) {
+	print("bout to asm call libc_execve\n")
 	call := libcall{
 		fn:   uintptr(unsafe.Pointer(&libc_execve)),
 		n:    3,
@@ -163,6 +166,7 @@ func syscall_exit(code uintptr) {
 //go:linkname syscall_fcntl
 //go:cgo_unsafe_args
 func syscall_fcntl(fd, cmd, arg uintptr) (val, err uintptr) {
+	print("bout to asm call libc_fcntl\n")
 	call := libcall{
 		fn:   uintptr(unsafe.Pointer(&libc_fcntl)),
 		n:    3,
@@ -182,6 +186,7 @@ func syscall_forkx(flags uintptr) (pid uintptr, err uintptr) {
 func syscall_gethostname() (name string, err uintptr) {
 	cname := new([_MAXHOSTNAMELEN]byte)
 	var args = [2]uintptr{uintptr(unsafe.Pointer(&cname[0])), _MAXHOSTNAMELEN}
+	print("bout to asm call libc_gethostname\n")
 	call := libcall{
 		fn:   uintptr(unsafe.Pointer(&libc_gethostname)),
 		n:    2,
@@ -200,6 +205,7 @@ func syscall_gethostname() (name string, err uintptr) {
 //go:nosplit
 //go:linkname syscall_getpid
 func syscall_getpid() (pid, err uintptr) {
+	print("bout to asm call libc_getpid\n")
 	call := libcall{
 		fn:   uintptr(unsafe.Pointer(&libc_getpid)),
 		n:    0,
@@ -213,6 +219,7 @@ func syscall_getpid() (pid, err uintptr) {
 //go:linkname syscall_ioctl
 //go:cgo_unsafe_args
 func syscall_ioctl(fd, req, arg uintptr) (err uintptr) {
+	print("bout to asm call libc_ioctl\n")
 	call := libcall{
 		fn:   uintptr(unsafe.Pointer(&libc_ioctl)),
 		n:    3,
@@ -241,6 +248,7 @@ func syscall_rawsyscall6(trap, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2, err uint
 //go:nosplit
 //go:linkname syscall_setgid
 func syscall_setgid(gid uintptr) (err uintptr) {
+	print("bout to asm call libc_setgid\n")
 	call := libcall{
 		fn:   uintptr(unsafe.Pointer(&libc_setgid)),
 		n:    1,
@@ -254,6 +262,7 @@ func syscall_setgid(gid uintptr) (err uintptr) {
 //go:linkname syscall_setgroups
 //go:cgo_unsafe_args
 func syscall_setgroups(ngid, gid uintptr) (err uintptr) {
+	print("bout to asm call libc_setgroups\n")
 	call := libcall{
 		fn:   uintptr(unsafe.Pointer(&libc_setgroups)),
 		n:    2,
@@ -267,6 +276,7 @@ func syscall_setgroups(ngid, gid uintptr) (err uintptr) {
 //go:linkname syscall_setrlimit
 //go:cgo_unsafe_args
 func syscall_setrlimit(which uintptr, lim unsafe.Pointer) (err uintptr) {
+	print("bout to asm call libc_setrlimit\n")
 	call := libcall{
 		fn:   uintptr(unsafe.Pointer(&libc_setrlimit)),
 		n:    2,
@@ -279,6 +289,7 @@ func syscall_setrlimit(which uintptr, lim unsafe.Pointer) (err uintptr) {
 //go:nosplit
 //go:linkname syscall_setsid
 func syscall_setsid() (pid, err uintptr) {
+	print("bout to asm call libc_setsid\n")
 	call := libcall{
 		fn:   uintptr(unsafe.Pointer(&libc_setsid)),
 		n:    0,
@@ -291,6 +302,7 @@ func syscall_setsid() (pid, err uintptr) {
 //go:nosplit
 //go:linkname syscall_setuid
 func syscall_setuid(uid uintptr) (err uintptr) {
+	print("bout to asm call libc_setuid\n")
 	call := libcall{
 		fn:   uintptr(unsafe.Pointer(&libc_setuid)),
 		n:    1,
@@ -304,6 +316,7 @@ func syscall_setuid(uid uintptr) (err uintptr) {
 //go:linkname syscall_setpgid
 //go:cgo_unsafe_args
 func syscall_setpgid(pid, pgid uintptr) (err uintptr) {
+	print("bout to asm call libc_setpgid\n")
 	call := libcall{
 		fn:   uintptr(unsafe.Pointer(&libc_setpgid)),
 		n:    2,

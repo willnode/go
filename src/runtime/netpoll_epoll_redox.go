@@ -53,15 +53,18 @@ const (
 )
 
 func epoll_create1(flags int32) (r1 int32, err int32) {
+	print("bout to run call libc_epoll_create1\n")
 	r, e := sysvicall1Err(&libc_epoll_create1, uintptr(flags))
 	return int32(r), int32(e)
 }
 
 func epoll_ctl(epfd int32, op int32, fd int32, event *EpollEvent) int32 {
+	print("bout to run call libc_epoll_ctl\n")
 	return int32(sysvicall4(&libc_epoll_ctl, uintptr(epfd), uintptr(op), uintptr(fd), uintptr(unsafe.Pointer(event))))
 }
 
 func epoll_wait(epfd int32, events *EpollEvent, maxevents int32, timeout int32) (r1 int32, err int32) {
+	print("bout to run call libc_epoll_wait\n")
 	r, e := sysvicall4Err(&libc_epoll_wait, uintptr(epfd), uintptr(unsafe.Pointer(events)), uintptr(maxevents), uintptr(timeout))
 	return int32(r), int32(e)
 }

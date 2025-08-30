@@ -217,11 +217,9 @@ func readRandom(r []byte) int {
 }
 
 func goenvs() {
-	print("argv detect start\n")
 
 	n := int32(0)
 	for argv_index(argv, argc+1+n) != nil {
-		print("argv detected\n")
 		n++
 	}
 
@@ -397,21 +395,25 @@ func semawakeup(mp *m) {
 
 //go:nosplit
 func closefd(fd int32) int32 {
+	print("bout to run call libc_close\n")
 	return int32(sysvicall1(&libc_close, uintptr(fd)))
 }
 
 //go:nosplit
 func exit(r int32) {
+	print("bout to run call libc_exit\n")
 	sysvicall1(&libc_exit, uintptr(r))
 }
 
 //go:nosplit
 func getcontext(context *ucontext) /* int32 */ {
+	print("bout to run call libc_getcontext\n")
 	sysvicall1(&libc_getcontext, uintptr(unsafe.Pointer(context)))
 }
 
 //go:nosplit
 func madvise(addr unsafe.Pointer, n uintptr, flags int32) {
+	print("bout to run call libc_madvise\n")
 	sysvicall3(&libc_madvise, uintptr(addr), uintptr(n), uintptr(flags))
 }
 
@@ -437,6 +439,7 @@ func doMmap(addr, n, prot, flags, fd, off uintptr) (uintptr, uintptr) {
 
 //go:nosplit
 func munmap(addr unsafe.Pointer, n uintptr) {
+	// print("bout to run call libc_munmap\n")
 	sysvicall2(&libc_munmap, uintptr(addr), uintptr(n))
 }
 
@@ -449,30 +452,37 @@ func nanotime1() int64 {
 
 //go:nosplit
 func open(path *byte, mode, perm int32) int32 {
+	print("bout to run call libc_open\n")
 	return int32(sysvicall3(&libc_open, uintptr(unsafe.Pointer(path)), uintptr(mode), uintptr(perm)))
 }
 
 func pthread_attr_destroy(attr *pthread_attr_t) int32 {
+	print("bout to run call libc_pthread_attr_destroy\n")
 	return int32(sysvicall1(&libc_pthread_attr_destroy, uintptr(unsafe.Pointer(attr))))
 }
 
 func pthread_attr_getstack(attr *pthread_attr_t, addr unsafe.Pointer, size *uint64) int32 {
+	print("bout to run call libc_pthread_attr_getstack\n")
 	return int32(sysvicall3(&libc_pthread_attr_getstack, uintptr(unsafe.Pointer(attr)), uintptr(addr), uintptr(unsafe.Pointer(size))))
 }
 
 func pthread_attr_init(attr *pthread_attr_t) int32 {
+	print("bout to run call libc_pthread_attr_init\n")
 	return int32(sysvicall1(&libc_pthread_attr_init, uintptr(unsafe.Pointer(attr))))
 }
 
 func pthread_attr_setdetachstate(attr *pthread_attr_t, state int32) int32 {
+	print("bout to run call libc_pthread_attr_setdetachstate\n")
 	return int32(sysvicall2(&libc_pthread_attr_setdetachstate, uintptr(unsafe.Pointer(attr)), uintptr(state)))
 }
 
 func pthread_attr_setstack(attr *pthread_attr_t, addr uintptr, size uint64) int32 {
+	print("bout to run call libc_pthread_attr_setstack\n")
 	return int32(sysvicall3(&libc_pthread_attr_setstack, uintptr(unsafe.Pointer(attr)), uintptr(addr), uintptr(size)))
 }
 
 func pthread_create(thread *pthread_t, attr *pthread_attr_t, fn uintptr, arg unsafe.Pointer) int32 {
+	print("bout to run call libc_pthread_create\n")
 	return int32(sysvicall4(&libc_pthread_create, uintptr(unsafe.Pointer(thread)), uintptr(unsafe.Pointer(attr)), uintptr(fn), uintptr(arg)))
 }
 
@@ -481,22 +491,26 @@ func pthread_self() pthread_t {
 }
 
 func signalM(mp *m, sig int) {
+	print("bout to run call libc_pthread_kill\n")
 	sysvicall2(&libc_pthread_kill, uintptr(pthread_t(mp.procid)), uintptr(sig))
 }
 
 //go:nosplit
 //go:nowritebarrierrec
 func raise(sig uint32) /* int32 */ {
+	print("bout to run call libc_raise\n")
 	sysvicall1(&libc_raise, uintptr(sig))
 }
 
 func raiseproc(sig uint32) /* int32 */ {
 	pid := sysvicall0(&libc_getpid)
+	print("bout to run call libc_kill\n")
 	sysvicall2(&libc_kill, pid, uintptr(sig))
 }
 
 //go:nosplit
 func read(fd int32, buf unsafe.Pointer, nbyte int32) int32 {
+	print("bout to run call libc_read\n")
 	r1, err := sysvicall3Err(&libc_read, uintptr(fd), uintptr(buf), uintptr(nbyte))
 	if c := int32(r1); c >= 0 {
 		return c
@@ -506,6 +520,7 @@ func read(fd int32, buf unsafe.Pointer, nbyte int32) int32 {
 
 //go:nosplit
 func sem_init(sem *sem_t, pshared int32, value uint32) int32 {
+	print("bout to run call libc_sem_init\n")
 	return int32(sysvicall3(&libc_sem_init, uintptr(unsafe.Pointer(sem)), uintptr(pshared), uintptr(value)))
 }
 
@@ -516,33 +531,39 @@ func sem_post(sem *sem_t) int32 {
 
 //go:nosplit
 func sem_timedwait(sem *sem_t, timeout *timespec) int32 {
+	print("bout to run call libc_sem_timedwait\n")
 	return int32(sysvicall2(&libc_sem_timedwait, uintptr(unsafe.Pointer(sem)), uintptr(unsafe.Pointer(timeout))))
 }
 
 //go:nosplit
 func sem_wait(sem *sem_t) int32 {
+	print("bout to run call libc_sem_wait\n")
 	return int32(sysvicall1(&libc_sem_wait, uintptr(unsafe.Pointer(sem))))
 }
 
 func setitimer(which int32, value *itimerval, ovalue *itimerval) /* int32 */ {
+	print("bout to run call libc_setitimer\n")
 	sysvicall3(&libc_setitimer, uintptr(which), uintptr(unsafe.Pointer(value)), uintptr(unsafe.Pointer(ovalue)))
 }
 
 //go:nosplit
 //go:nowritebarrierrec
 func sigaction(sig uint32, act *sigactiont, oact *sigactiont) /* int32 */ {
+	// print("bout to run call libc_sigaction\n")
 	sysvicall3(&libc_sigaction, uintptr(sig), uintptr(unsafe.Pointer(act)), uintptr(unsafe.Pointer(oact)))
 }
 
 //go:nosplit
 //go:nowritebarrierrec
 func sigaltstack(ss *stackt, oss *stackt) /* int32 */ {
+	print("bout to run call libc_sigaltstack\n")
 	sysvicall2(&libc_sigaltstack, uintptr(unsafe.Pointer(ss)), uintptr(unsafe.Pointer(oss)))
 }
 
 //go:nosplit
 //go:nowritebarrierrec
 func sigprocmask(how int32, set *sigset, oset *sigset) /* int32 */ {
+	print("bout to run call libc_sigprocmask\n")
 	sysvicall3(&libc_sigprocmask, uintptr(how), uintptr(unsafe.Pointer(set)), uintptr(unsafe.Pointer(oset)))
 }
 
@@ -580,13 +601,16 @@ func write1(fd uintptr, buf unsafe.Pointer, nbyte int32) int32 {
 //go:nosplit
 func pipe2(flags int32) (r, w int32, errno int32) {
 	var p [2]int32
+	print("bout to run call pipe2\n")
 	_, e := sysvicall2Err(&libc_pipe2, uintptr(noescape(unsafe.Pointer(&p))), uintptr(flags))
 	return p[0], p[1], int32(e)
 }
 
 //go:nosplit
 func fcntl(fd, cmd, arg int32) (ret int32, errno int32) {
+	print("bout to run call libc_fcntl\n")
 	r1, err := sysvicall3Err(&libc_fcntl, uintptr(fd), uintptr(cmd), uintptr(arg))
+	print("done run call libc_fcntl\n")
 	return int32(r1), int32(err)
 }
 

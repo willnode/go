@@ -48,6 +48,7 @@ func Fstatat(dirfd int, path string, stat *syscall.Stat_t, flags int) error {
 		return err
 	}
 
+	print("bout to sys call procFstatat\n")
 	_, _, errno := syscall6(uintptr(unsafe.Pointer(&procFstatat)), 4,
 		uintptr(dirfd),
 		uintptr(unsafe.Pointer(p)),

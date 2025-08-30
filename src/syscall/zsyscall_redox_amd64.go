@@ -273,6 +273,7 @@ var (
 
 
 func pipe2(p *[2]_C_int, flags int) (err error) {
+	print("bout to sys call libc_pipe2\n")
 	_, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_pipe2)), 2, uintptr(unsafe.Pointer(p)), uintptr(flags), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -287,6 +288,7 @@ func Getcwd(buf []byte) (n int, err error) {
 	if len(buf) > 0 {
 		_p0 = &buf[0]
 	}
+	print("bout to sys call libc_Getcwd\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Getcwd)), 2, uintptr(unsafe.Pointer(_p0)), uintptr(len(buf)), 0, 0, 0, 0)
 	n = int(r0)
 	if e1 != 0 {
@@ -298,6 +300,7 @@ func Getcwd(buf []byte) (n int, err error) {
 
 
 func getgroups(ngid int, gid *_Gid_t) (n int, err error) {
+	print("bout to sys call libc_getgroups\n")
 	r0, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_getgroups)), 2, uintptr(ngid), uintptr(unsafe.Pointer(gid)), 0, 0, 0, 0)
 	n = int(r0)
 	if e1 != 0 {
@@ -309,6 +312,7 @@ func getgroups(ngid int, gid *_Gid_t) (n int, err error) {
 
 
 func setgroups(ngid int, gid *_Gid_t) (err error) {
+	print("bout to sys call libc_setgroups\n")
 	_, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_setgroups)), 2, uintptr(ngid), uintptr(unsafe.Pointer(gid)), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -319,6 +323,7 @@ func setgroups(ngid int, gid *_Gid_t) (err error) {
 
 
 func fcntl(fd int, cmd int, arg int) (val int, err error) {
+	print("bout to sys call libc_fcntl\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_fcntl)), 3, uintptr(fd), uintptr(cmd), uintptr(arg), 0, 0, 0)
 	val = int(r0)
 	if e1 != 0 {
@@ -330,6 +335,7 @@ func fcntl(fd int, cmd int, arg int) (val int, err error) {
 
 
 func accept(s int, rsa *RawSockaddrAny, addrlen *_Socklen) (fd int, err error) {
+	print("bout to sys call libc_accept\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_accept)), 3, uintptr(s), uintptr(unsafe.Pointer(rsa)), uintptr(unsafe.Pointer(addrlen)), 0, 0, 0)
 	fd = int(r0)
 	if e1 != 0 {
@@ -341,6 +347,7 @@ func accept(s int, rsa *RawSockaddrAny, addrlen *_Socklen) (fd int, err error) {
 
 
 func sendmsg(s int, msg *Msghdr, flags int) (n int, err error) {
+	print("bout to sys call libc_sendmsg\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_sendmsg)), 3, uintptr(s), uintptr(unsafe.Pointer(msg)), uintptr(flags), 0, 0, 0)
 	n = int(r0)
 	if e1 != 0 {
@@ -357,6 +364,7 @@ func Access(path string, mode uint32) (err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Access\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Access)), 2, uintptr(unsafe.Pointer(_p0)), uintptr(mode), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -367,6 +375,7 @@ func Access(path string, mode uint32) (err error) {
 
 
 func Adjtime(delta *Timeval, olddelta *Timeval) (err error) {
+	print("bout to sys call libc_Adjtime\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Adjtime)), 2, uintptr(unsafe.Pointer(delta)), uintptr(unsafe.Pointer(olddelta)), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -382,6 +391,7 @@ func Chdir(path string) (err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Chdir\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Chdir)), 1, uintptr(unsafe.Pointer(_p0)), 0, 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -397,6 +407,7 @@ func Chmod(path string, mode uint32) (err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Chmod\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Chmod)), 2, uintptr(unsafe.Pointer(_p0)), uintptr(mode), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -412,6 +423,7 @@ func Chown(path string, uid int, gid int) (err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Chown\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Chown)), 3, uintptr(unsafe.Pointer(_p0)), uintptr(uid), uintptr(gid), 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -427,6 +439,7 @@ func Chroot(path string) (err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Chroot\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Chroot)), 1, uintptr(unsafe.Pointer(_p0)), 0, 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -437,6 +450,7 @@ func Chroot(path string) (err error) {
 
 
 func Close(fd int) (err error) {
+	print("bout to sys call libc_Close\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Close)), 1, uintptr(fd), 0, 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -447,6 +461,7 @@ func Close(fd int) (err error) {
 
 
 func Dup(fd int) (nfd int, err error) {
+	print("bout to sys call libc_Dup\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Dup)), 1, uintptr(fd), 0, 0, 0, 0, 0)
 	nfd = int(r0)
 	if e1 != 0 {
@@ -458,6 +473,7 @@ func Dup(fd int) (nfd int, err error) {
 
 
 func Fchdir(fd int) (err error) {
+	print("bout to sys call libc_Fchdir\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Fchdir)), 1, uintptr(fd), 0, 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -468,6 +484,7 @@ func Fchdir(fd int) (err error) {
 
 
 func Fchmod(fd int, mode uint32) (err error) {
+	print("bout to sys call libc_Fchmod\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Fchmod)), 2, uintptr(fd), uintptr(mode), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -478,6 +495,7 @@ func Fchmod(fd int, mode uint32) (err error) {
 
 
 func Fchown(fd int, uid int, gid int) (err error) {
+	print("bout to sys call libc_Fchown\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Fchown)), 3, uintptr(fd), uintptr(uid), uintptr(gid), 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -488,6 +506,7 @@ func Fchown(fd int, uid int, gid int) (err error) {
 
 
 func Fpathconf(fd int, name int) (val int, err error) {
+	print("bout to sys call libc_Fpathconf\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Fpathconf)), 2, uintptr(fd), uintptr(name), 0, 0, 0, 0)
 	val = int(r0)
 	if e1 != 0 {
@@ -499,6 +518,7 @@ func Fpathconf(fd int, name int) (val int, err error) {
 
 
 func Fstat(fd int, stat *Stat_t) (err error) {
+	print("bout to sys call libc_Fstat\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Fstat)), 2, uintptr(fd), uintptr(unsafe.Pointer(stat)), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -549,6 +569,7 @@ func Getppid() (ppid int) {
 
 
 func Getpriority(which int, who int) (n int, err error) {
+	print("bout to sys call libc_Getpriority\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Getpriority)), 2, uintptr(which), uintptr(who), 0, 0, 0, 0)
 	n = int(r0)
 	if e1 != 0 {
@@ -560,6 +581,7 @@ func Getpriority(which int, who int) (n int, err error) {
 
 
 func Getrlimit(which int, lim *Rlimit) (err error) {
+	print("bout to sys call libc_Getrlimit\n")
 	_, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_Getrlimit)), 2, uintptr(which), uintptr(unsafe.Pointer(lim)), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -570,6 +592,7 @@ func Getrlimit(which int, lim *Rlimit) (err error) {
 
 
 func Getrusage(who int, rusage *Rusage) (err error) {
+	print("bout to sys call libc_Getrusage\n")
 	_, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_Getrusage)), 2, uintptr(who), uintptr(unsafe.Pointer(rusage)), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -580,6 +603,7 @@ func Getrusage(who int, rusage *Rusage) (err error) {
 
 
 func Gettimeofday(tv *Timeval) (err error) {
+	print("bout to sys call libc_Gettimeofday\n")
 	_, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_Gettimeofday)), 1, uintptr(unsafe.Pointer(tv)), 0, 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -598,6 +622,7 @@ func Getuid() (uid int) {
 
 
 func Kill(pid int, signum Signal) (err error) {
+	print("bout to sys call libc_Kill\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Kill)), 2, uintptr(pid), uintptr(signum), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -613,6 +638,7 @@ func Lchown(path string, uid int, gid int) (err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Lchown\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Lchown)), 3, uintptr(unsafe.Pointer(_p0)), uintptr(uid), uintptr(gid), 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -633,6 +659,7 @@ func Link(path string, link string) (err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Link\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Link)), 2, uintptr(unsafe.Pointer(_p0)), uintptr(unsafe.Pointer(_p1)), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -643,6 +670,7 @@ func Link(path string, link string) (err error) {
 
 
 func Listen(s int, backlog int) (err error) {
+	print("bout to sys call libc_listen\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_listen)), 2, uintptr(s), uintptr(backlog), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -658,6 +686,7 @@ func Lstat(path string, stat *Stat_t) (err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Lstat\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Lstat)), 2, uintptr(unsafe.Pointer(_p0)), uintptr(unsafe.Pointer(stat)), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -673,6 +702,7 @@ func Mkdir(path string, mode uint32) (err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Mkdir\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Mkdir)), 2, uintptr(unsafe.Pointer(_p0)), uintptr(mode), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -688,6 +718,7 @@ func Mknod(path string, mode uint32, dev int) (err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Mknod\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Mknod)), 3, uintptr(unsafe.Pointer(_p0)), uintptr(mode), uintptr(dev), 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -698,6 +729,7 @@ func Mknod(path string, mode uint32, dev int) (err error) {
 
 
 func Nanosleep(time *Timespec, leftover *Timespec) (err error) {
+	print("bout to sys call libc_Nanosleep\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Nanosleep)), 2, uintptr(unsafe.Pointer(time)), uintptr(unsafe.Pointer(leftover)), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -713,6 +745,7 @@ func Open(path string, mode int, perm uint32) (fd int, err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Open\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Open)), 3, uintptr(unsafe.Pointer(_p0)), uintptr(mode), uintptr(perm), 0, 0, 0)
 	fd = int(r0)
 	if e1 != 0 {
@@ -729,6 +762,7 @@ func Pathconf(path string, name int) (val int, err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Pathconf\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Pathconf)), 2, uintptr(unsafe.Pointer(_p0)), uintptr(name), 0, 0, 0, 0)
 	val = int(r0)
 	if e1 != 0 {
@@ -744,6 +778,7 @@ func pread(fd int, p []byte, offset int64) (n int, err error) {
 	if len(p) > 0 {
 		_p0 = &p[0]
 	}
+	print("bout to sys call libc_pread\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_pread)), 4, uintptr(fd), uintptr(unsafe.Pointer(_p0)), uintptr(len(p)), uintptr(offset), 0, 0)
 	n = int(r0)
 	if e1 != 0 {
@@ -759,6 +794,7 @@ func pwrite(fd int, p []byte, offset int64) (n int, err error) {
 	if len(p) > 0 {
 		_p0 = &p[0]
 	}
+	print("bout to sys call libc_pwrite\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_pwrite)), 4, uintptr(fd), uintptr(unsafe.Pointer(_p0)), uintptr(len(p)), uintptr(offset), 0, 0)
 	n = int(r0)
 	if e1 != 0 {
@@ -774,6 +810,7 @@ func read(fd int, p []byte) (n int, err error) {
 	if len(p) > 0 {
 		_p0 = &p[0]
 	}
+	print("bout to sys call libc_read\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_read)), 3, uintptr(fd), uintptr(unsafe.Pointer(_p0)), uintptr(len(p)), 0, 0, 0)
 	n = int(r0)
 	if e1 != 0 {
@@ -794,6 +831,7 @@ func Readlink(path string, buf []byte) (n int, err error) {
 	if len(buf) > 0 {
 		_p1 = &buf[0]
 	}
+	print("bout to sys call libc_Readlink\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Readlink)), 3, uintptr(unsafe.Pointer(_p0)), uintptr(unsafe.Pointer(_p1)), uintptr(len(buf)), 0, 0, 0)
 	n = int(r0)
 	if e1 != 0 {
@@ -815,6 +853,7 @@ func Rename(from string, to string) (err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Rename\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Rename)), 2, uintptr(unsafe.Pointer(_p0)), uintptr(unsafe.Pointer(_p1)), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -830,6 +869,7 @@ func Rmdir(path string) (err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Rmdir\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Rmdir)), 1, uintptr(unsafe.Pointer(_p0)), 0, 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -840,6 +880,7 @@ func Rmdir(path string) (err error) {
 
 
 func Seek(fd int, offset int64, whence int) (newoffset int64, err error) {
+	print("bout to sys call libc_lseek\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_lseek)), 3, uintptr(fd), uintptr(offset), uintptr(whence), 0, 0, 0)
 	newoffset = int64(r0)
 	if e1 != 0 {
@@ -851,6 +892,7 @@ func Seek(fd int, offset int64, whence int) (newoffset int64, err error) {
 
 
 func sendfile(outfd int, infd int, offset *int64, count int) (written int, err error) {
+	print("bout to sys call libc_sendfile\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_sendfile)), 4, uintptr(outfd), uintptr(infd), uintptr(unsafe.Pointer(offset)), uintptr(count), 0, 0)
 	written = int(r0)
 	if e1 != 0 {
@@ -862,6 +904,7 @@ func sendfile(outfd int, infd int, offset *int64, count int) (written int, err e
 
 
 func Setegid(egid int) (err error) {
+	print("bout to sys call libc_Setegid\n")
 	_, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_Setegid)), 1, uintptr(egid), 0, 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -872,6 +915,7 @@ func Setegid(egid int) (err error) {
 
 
 func Seteuid(euid int) (err error) {
+	print("bout to sys call libc_Seteuid\n")
 	_, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_Seteuid)), 1, uintptr(euid), 0, 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -882,6 +926,7 @@ func Seteuid(euid int) (err error) {
 
 
 func Setgid(gid int) (err error) {
+	print("bout to sys call libc_Setgid\n")
 	_, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_Setgid)), 1, uintptr(gid), 0, 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -892,6 +937,7 @@ func Setgid(gid int) (err error) {
 
 
 func Setpgid(pid int, pgid int) (err error) {
+	print("bout to sys call libc_Setpgid\n")
 	_, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_Setpgid)), 2, uintptr(pid), uintptr(pgid), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -902,6 +948,7 @@ func Setpgid(pid int, pgid int) (err error) {
 
 
 func Setpriority(which int, who int, prio int) (err error) {
+	print("bout to sys call libc_Setpriority\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Setpriority)), 3, uintptr(which), uintptr(who), uintptr(prio), 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -912,6 +959,7 @@ func Setpriority(which int, who int, prio int) (err error) {
 
 
 func Setregid(rgid int, egid int) (err error) {
+	print("bout to sys call libc_Setregid\n")
 	_, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_Setregid)), 2, uintptr(rgid), uintptr(egid), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -922,6 +970,7 @@ func Setregid(rgid int, egid int) (err error) {
 
 
 func Setreuid(ruid int, euid int) (err error) {
+	print("bout to sys call libc_Setreuid\n")
 	_, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_Setreuid)), 2, uintptr(ruid), uintptr(euid), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -932,6 +981,7 @@ func Setreuid(ruid int, euid int) (err error) {
 
 
 func setrlimit(which int, lim *Rlimit) (err error) {
+	print("bout to sys call libc_setrlimit\n")
 	_, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_setrlimit)), 2, uintptr(which), uintptr(unsafe.Pointer(lim)), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -942,6 +992,7 @@ func setrlimit(which int, lim *Rlimit) (err error) {
 
 
 func Setsid() (pid int, err error) {
+	print("bout to sys call libc_Setsid\n")
 	r0, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_Setsid)), 0, 0, 0, 0, 0, 0, 0)
 	pid = int(r0)
 	if e1 != 0 {
@@ -953,6 +1004,7 @@ func Setsid() (pid int, err error) {
 
 
 func Setuid(uid int) (err error) {
+	print("bout to sys call libc_Setuid\n")
 	_, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_Setuid)), 1, uintptr(uid), 0, 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -963,6 +1015,7 @@ func Setuid(uid int) (err error) {
 
 
 func Shutdown(s int, how int) (err error) {
+	print("bout to sys call libc_shutdown\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_shutdown)), 2, uintptr(s), uintptr(how), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -978,6 +1031,7 @@ func Stat(path string, stat *Stat_t) (err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Stat\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Stat)), 2, uintptr(unsafe.Pointer(_p0)), uintptr(unsafe.Pointer(stat)), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -998,6 +1052,7 @@ func Symlink(path string, link string) (err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Symlink\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Symlink)), 2, uintptr(unsafe.Pointer(_p0)), uintptr(unsafe.Pointer(_p1)), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1008,6 +1063,7 @@ func Symlink(path string, link string) (err error) {
 
 
 func Sync() (err error) {
+	print("bout to sys call libc_Sync\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Sync)), 0, 0, 0, 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1023,6 +1079,7 @@ func Truncate(path string, length int64) (err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Truncate\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Truncate)), 2, uintptr(unsafe.Pointer(_p0)), uintptr(length), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1033,6 +1090,7 @@ func Truncate(path string, length int64) (err error) {
 
 
 func Fsync(fd int) (err error) {
+	print("bout to sys call libc_Fsync\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Fsync)), 1, uintptr(fd), 0, 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1043,6 +1101,7 @@ func Fsync(fd int) (err error) {
 
 
 func Ftruncate(fd int, length int64) (err error) {
+	print("bout to sys call libc_Ftruncate\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Ftruncate)), 2, uintptr(fd), uintptr(length), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1066,6 +1125,7 @@ func Unlink(path string) (err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_Unlink\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_Unlink)), 1, uintptr(unsafe.Pointer(_p0)), 0, 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1081,6 +1141,7 @@ func utimes(path string, times *[2]Timeval) (err error) {
 	if err != nil {
 		return
 	}
+	print("bout to sys call libc_utimes\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_utimes)), 2, uintptr(unsafe.Pointer(_p0)), uintptr(unsafe.Pointer(times)), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1091,6 +1152,7 @@ func utimes(path string, times *[2]Timeval) (err error) {
 
 
 func bind(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) {
+	print("bout to sys call libc_bind\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_bind)), 3, uintptr(s), uintptr(addr), uintptr(addrlen), 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1101,6 +1163,7 @@ func bind(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) {
 
 
 func connect(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) {
+	print("bout to sys call libc_connect\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_connect)), 3, uintptr(s), uintptr(addr), uintptr(addrlen), 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1111,6 +1174,7 @@ func connect(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) {
 
 
 func mmap(addr uintptr, length uintptr, prot int, flag int, fd int, pos int64) (ret uintptr, err error) {
+	print("bout to sys call libc_mmap\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_mmap)), 6, uintptr(addr), uintptr(length), uintptr(prot), uintptr(flag), uintptr(fd), uintptr(pos))
 	ret = uintptr(r0)
 	if e1 != 0 {
@@ -1122,6 +1186,7 @@ func mmap(addr uintptr, length uintptr, prot int, flag int, fd int, pos int64) (
 
 
 func munmap(addr uintptr, length uintptr) (err error) {
+	print("bout to sys call libc_munmap\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_munmap)), 2, uintptr(addr), uintptr(length), 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1136,6 +1201,7 @@ func sendto(s int, buf []byte, flags int, to unsafe.Pointer, addrlen _Socklen) (
 	if len(buf) > 0 {
 		_p0 = &buf[0]
 	}
+	print("bout to sys call libc_sendto\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_sendto)), 6, uintptr(s), uintptr(unsafe.Pointer(_p0)), uintptr(len(buf)), uintptr(flags), uintptr(to), uintptr(addrlen))
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1146,6 +1212,7 @@ func sendto(s int, buf []byte, flags int, to unsafe.Pointer, addrlen _Socklen) (
 
 
 func socket(domain int, typ int, proto int) (fd int, err error) {
+	print("bout to sys call libc_socket\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_socket)), 3, uintptr(domain), uintptr(typ), uintptr(proto), 0, 0, 0)
 	fd = int(r0)
 	if e1 != 0 {
@@ -1157,6 +1224,7 @@ func socket(domain int, typ int, proto int) (fd int, err error) {
 
 
 func socketpair(domain int, typ int, proto int, fd *[2]int32) (err error) {
+	print("bout to sys call libc_socketpair\n")
 	_, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_socketpair)), 4, uintptr(domain), uintptr(typ), uintptr(proto), uintptr(unsafe.Pointer(fd)), 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1167,6 +1235,7 @@ func socketpair(domain int, typ int, proto int, fd *[2]int32) (err error) {
 
 
 func Uname(buf *Utsname) (err error) {
+	print("bout to sys call libc_uname\n")
 	_, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_uname)), 1, uintptr(unsafe.Pointer(buf)), 0, 0, 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1196,6 +1265,7 @@ func writev(fd int, iovecs []Iovec) (n uintptr, err error) {
 	if len(iovecs) > 0 {
 		_p0 = &iovecs[0]
 	}
+	print("bout to sys call libc_writev\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_writev)), 3, uintptr(fd), uintptr(unsafe.Pointer(_p0)), uintptr(len(iovecs)), 0, 0, 0)
 	n = uintptr(r0)
 	if e1 != 0 {
@@ -1207,6 +1277,7 @@ func writev(fd int, iovecs []Iovec) (n uintptr, err error) {
 
 
 func getsockopt(s int, level int, name int, val unsafe.Pointer, vallen *_Socklen) (err error) {
+	print("bout to sys call libc_getsockopt\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_getsockopt)), 5, uintptr(s), uintptr(level), uintptr(name), uintptr(val), uintptr(unsafe.Pointer(vallen)), 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1217,6 +1288,7 @@ func getsockopt(s int, level int, name int, val unsafe.Pointer, vallen *_Socklen
 
 
 func getpeername(fd int, rsa *RawSockaddrAny, addrlen *_Socklen) (err error) {
+	print("bout to sys call libc_getpeername\n")
 	_, _, e1 := rawSysvicall6(uintptr(unsafe.Pointer(&libc_getpeername)), 3, uintptr(fd), uintptr(unsafe.Pointer(rsa)), uintptr(unsafe.Pointer(addrlen)), 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1227,6 +1299,7 @@ func getpeername(fd int, rsa *RawSockaddrAny, addrlen *_Socklen) (err error) {
 
 
 func getsockname(fd int, rsa *RawSockaddrAny, addrlen *_Socklen) (err error) {
+	print("bout to sys call libc_getsockname\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_getsockname)), 3, uintptr(fd), uintptr(unsafe.Pointer(rsa)), uintptr(unsafe.Pointer(addrlen)), 0, 0, 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1237,6 +1310,7 @@ func getsockname(fd int, rsa *RawSockaddrAny, addrlen *_Socklen) (err error) {
 
 
 func setsockopt(s int, level int, name int, val unsafe.Pointer, vallen uintptr) (err error) {
+	print("bout to sys call libc_setsockopt\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_setsockopt)), 5, uintptr(s), uintptr(level), uintptr(name), uintptr(val), uintptr(vallen), 0)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1251,6 +1325,7 @@ func recvfrom(fd int, p []byte, flags int, from *RawSockaddrAny, fromlen *_Sockl
 	if len(p) > 0 {
 		_p0 = &p[0]
 	}
+	print("bout to sys call libc_recvfrom\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_recvfrom)), 6, uintptr(fd), uintptr(unsafe.Pointer(_p0)), uintptr(len(p)), uintptr(flags), uintptr(unsafe.Pointer(from)), uintptr(unsafe.Pointer(fromlen)))
 	n = int(r0)
 	if e1 != 0 {
@@ -1262,6 +1337,7 @@ func recvfrom(fd int, p []byte, flags int, from *RawSockaddrAny, fromlen *_Sockl
 
 
 func recvmsg(s int, msg *Msghdr, flags int) (n int, err error) {
+	print("bout to sys call libc_recvmsg\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_recvmsg)), 3, uintptr(s), uintptr(unsafe.Pointer(msg)), uintptr(flags), 0, 0, 0)
 	n = int(r0)
 	if e1 != 0 {
@@ -1273,6 +1349,7 @@ func recvmsg(s int, msg *Msghdr, flags int) (n int, err error) {
 
 
 func getexecname() (path unsafe.Pointer, err error) {
+	print("bout to sys call libc_getexecname\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_getexecname)), 0, 0, 0, 0, 0, 0, 0)
 	path = unsafe.Pointer(r0)
 	if e1 != 0 {

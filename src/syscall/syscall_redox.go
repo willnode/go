@@ -270,6 +270,7 @@ func UtimesNano(path string, ts []Timespec) error {
 
 // FcntlFlock performs a fcntl syscall for the [F_GETLK], [F_SETLK] or [F_SETLKW] command.
 func FcntlFlock(fd uintptr, cmd int, lk *Flock_t) error {
+	print("bout to sys call libc_fcntl\n")
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_fcntl)), 3, uintptr(fd), uintptr(cmd), uintptr(unsafe.Pointer(lk)), 0, 0, 0)
 	if e1 != 0 {
 		return e1
@@ -490,6 +491,7 @@ func Getexecname() (path string, err error) {
 }
 
 func readlen(fd int, buf *byte, nbuf int) (n int, err error) {
+	print("bout to sys call libc_read\n")
 	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_read)), 3, uintptr(fd), uintptr(unsafe.Pointer(buf)), uintptr(nbuf), 0, 0, 0)
 	n = int(r0)
 	if e1 != 0 {

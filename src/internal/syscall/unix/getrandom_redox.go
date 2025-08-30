@@ -37,6 +37,7 @@ func GetRandom(p []byte, flags GetRandomFlag) (n int, err error) {
 	if getrandomUnsupported.Load() {
 		return 0, syscall.ENOSYS
 	}
+	print("bout to sys call procGetrandom\n")
 	r1, _, errno := syscall6(uintptr(unsafe.Pointer(&procGetrandom)),
 		3,
 		uintptr(unsafe.Pointer(&p[0])),
