@@ -6,7 +6,6 @@ package runtime
 
 import (
 	"internal/abi"
-	"internal/goarch"
 	"internal/runtime/atomic"
 	"unsafe"
 )
@@ -208,9 +207,11 @@ var urandom_dev = []byte("/scheme/rand\x00")
 //go:nosplit
 func readRandom(r []byte) int {
 	// broken
-	// print("readrandom")
+	// print("openrandom\n")
 	// fd := open(&urandom_dev[0], _O_RDONLY, 0)
+	// print("readrandom\n")
 	// n := read(fd, unsafe.Pointer(&r[0]), int32(len(r)))
+	// print("closerandom\n")
 	// closefd(fd)
 	// return int(n)
 	return 0
@@ -219,11 +220,12 @@ func readRandom(r []byte) int {
 func goenvs() {
 
 	n := int32(0)
-	for argv_index(argv, argc+1+n) != nil {
-		n++
-	}
+	// for argv_index(argv, argc+1+n) != nil {
+	// 	n++
+	// }
 
-	goenvs_unix()
+	// goenvs_unix()
+	envs = make([]string, n)
 }
 
 // Called to initialize a new m (including the bootstrap m).
@@ -630,20 +632,21 @@ func osyield() {
 var executablePath string
 
 func sysargs(argc int32, argv **byte) {
-	n := argc + 1
+	// probably not exist
+	// n := argc + 1
+	// print("bout sysargs\n")
+	// for argv_index(argv, n) != nil {
+	// 	print("loop sysargs\n")
+	// 	n++
+	// }
 
-	// skip over argv, envp to get to auxv
-	for argv_index(argv, n) != nil {
-		n++
-	}
+	// // skip NULL separator
+	// n++
 
-	// skip NULL separator
-	n++
-
-	// now argv+n is auxv
-	auxvp := (*[1 << 28]uintptr)(add(unsafe.Pointer(argv), uintptr(n)*goarch.PtrSize))
-	pairs := sysauxv(auxvp[:])
-	auxv = auxvp[: pairs*2 : pairs*2]
+	// // now argv+n is auxv
+	// auxvp := (*[1 << 28]uintptr)(add(unsafe.Pointer(argv), uintptr(n)*goarch.PtrSize))
+	// pairs := sysauxv(auxvp[:])
+	// auxv = auxvp[: pairs*2 : pairs*2]
 }
 
 const (
