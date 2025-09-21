@@ -14,6 +14,7 @@ import (
 //go:cgo_export_dynamic runtime.etext _etext
 //go:cgo_export_dynamic runtime.edata _edata
 
+//go:cgo_import_dynamic libc___errno __errno "libc.so"
 //go:cgo_import_dynamic libc_clock_gettime clock_gettime "libc.so"
 //go:cgo_import_dynamic libc_exit _exit "libc.so"
 //go:cgo_import_dynamic libc_getcontext getcontext "libc.so"
@@ -48,6 +49,7 @@ import (
 //go:cgo_import_dynamic libc_write write "libc.so"
 //go:cgo_import_dynamic libc_pipe2 pipe2 "libc.so"
 
+//go:linkname libc___errno libc___errno
 //go:linkname libc_clock_gettime libc_clock_gettime
 //go:linkname libc_exit libc_exit
 //go:linkname libc_getcontext libc_getcontext
@@ -83,6 +85,7 @@ import (
 //go:linkname libc_pipe2 libc_pipe2
 
 var (
+	libc___errno,
 	libc_clock_gettime,
 	libc_exit,
 	libc_getcontext,
@@ -142,12 +145,9 @@ func getPageSize() uintptr {
 }
 
 func osinit() {
-	numCPUStartup = getCPUCount()
+	numCPUStartup = 1;
 
-	if physPageSize == 0 {
-		physPageSize = getPageSize()
-
-	}
+	physPageSize = 4096;
 }
 
 func tstart_sysvicall(newm *m) uint32
@@ -208,7 +208,10 @@ var urandom_dev = []byte("/scheme/rand\x00")
 func readRandom(r []byte) int {
 	// broken
 	// print("openrandom\n")
-	// fd := open(&urandom_dev[0], _O_RDONLY, 0)
+	// var pp *byte
+	// pp = &urandom_dev[0]
+	// print("firstrandom ", *pp, "\n")
+	// fd := open(pp, _O_RDONLY, 0)
 	// print("readrandom\n")
 	// n := read(fd, unsafe.Pointer(&r[0]), int32(len(r)))
 	// print("closerandom\n")
@@ -235,9 +238,13 @@ func mpreinit(mp *m) {
 	mp.gsignal.m = mp
 }
 
+func miniterrno()
+
 // Called to initialize a new m (including the bootstrap m).
 // Called on the new thread, cannot allocate memory.
 func minit() {
+	asmcgocall(unsafe.Pointer(abi.FuncPCABI0(miniterrno)), unsafe.Pointer(&libc___errno))
+
 	minitSignals()
 
 	getg().m.procid = uint64(pthread_self())
@@ -630,44 +637,6 @@ func osyield() {
 
 //go:linkname executablePath os.executablePath
 var executablePath string
-
-func sysargs(argc int32, argv **byte) {
-	// probably not exist
-	// n := argc + 1
-	// print("bout sysargs\n")
-	// for argv_index(argv, n) != nil {
-	// 	print("loop sysargs\n")
-	// 	n++
-	// }
-
-	// // skip NULL separator
-	// n++
-
-	// // now argv+n is auxv
-	// auxvp := (*[1 << 28]uintptr)(add(unsafe.Pointer(argv), uintptr(n)*goarch.PtrSize))
-	// pairs := sysauxv(auxvp[:])
-	// auxv = auxvp[: pairs*2 : pairs*2]
-}
-
-const (
-	_AT_NULL         = 0    // Terminates the vector
-	_AT_PAGESZ       = 6    // Page size in bytes
-	_AT_SUN_EXECNAME = 2014 // exec() path name
-)
-
-func sysauxv(auxv []uintptr) (pairs int) {
-	var i int
-	for i = 0; auxv[i] != _AT_NULL; i += 2 {
-		tag, val := auxv[i], auxv[i+1]
-		switch tag {
-		case _AT_PAGESZ:
-			physPageSize = val
-		case _AT_SUN_EXECNAME:
-			executablePath = gostringnocopy((*byte)(unsafe.Pointer(val)))
-		}
-	}
-	return i / 2
-}
 
 // sigPerThreadSyscall is only used on linux, so we assign a bogus signal
 // number.

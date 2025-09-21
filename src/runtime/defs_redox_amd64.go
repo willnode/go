@@ -103,10 +103,7 @@ const (
 	_O_DIRECTORY = 0x10000000
 	_O_PATH      = 0x20000000
 	_O_SYMLINK   = 0x40000000
-)
 
-// Standard error and clock constants.
-const (
 	CLOCK_REALTIME  = 0
 	CLOCK_MONOTONIC = 4
 
@@ -118,23 +115,16 @@ const (
 	_MAXHOSTNAMELEN = 0x40
 )
 
-//
-// C-like types defined in Go for syscalls.
-//
-
 type pthread_t uintptr
 
-// Pthread attributes, 32 bytes on relibc.
 type pthread_attr_t struct {
 	__align [32]byte
 }
 
-// Pthread condition variable, 8 bytes on relibc.
 type pthread_cond_t struct {
 	__align [8]byte
 }
 
-// Pthread mutex, 12 bytes on relibc.
 type pthread_mutex_t struct {
 	__align [12]byte
 }
