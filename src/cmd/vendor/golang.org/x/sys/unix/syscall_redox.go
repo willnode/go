@@ -187,7 +187,7 @@ func Setgroups(gids []int) (err error) {
 }
 
 func ReadDirent(fd int, buf []byte) (n int, err error) {
-	panic("getdents TODO")
+	return PosixGetdents(fd, buf, 0)
 }
 
 // Wait status is 7 bits at bottom, either 0 (exited),

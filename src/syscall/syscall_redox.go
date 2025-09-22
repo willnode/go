@@ -211,7 +211,7 @@ func Setgroups(gids []int) (err error) {
 }
 
 func ReadDirent(fd int, buf []byte) (n int, err error) {
-	panic("getdents TODO")
+	return PosixGetdents(fd, buf, 0)
 }
 
 // Wait status is 7 bits at bottom, either 0 (exited),
@@ -474,6 +474,7 @@ func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags i
 //sys	Symlink(path string, link string) (err error)
 //sys	Sync() (err error)
 //sys	Truncate(path string, length int64) (err error)
+//sys	PosixGetdents(fd int, buf []byte, flag int) (n int, err error)
 //sys	Fsync(fd int) (err error)
 //sys	Ftruncate(fd int, length int64) (err error)
 //sys	Umask(newmask int) (oldmask int)
