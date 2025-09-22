@@ -222,7 +222,7 @@ type Termios struct {
 }
 
 const (
-	_AT_FDCWD = -0x64
+	_AT_FDCWD = -100
 )
 
 type Utsname struct {

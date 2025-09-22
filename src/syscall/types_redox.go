@@ -176,7 +176,7 @@ type Termios C.struct_termios
 // Misc
 
 const (
-	_AT_FDCWD = C.AT_FDCWD
+	_AT_FDCWD = -100
 	// _AT_REMOVEDIR        = C.AT_REMOVEDIR
 	// _AT_SYMLINK_NOFOLLOW = C.AT_SYMLINK_NOFOLLOW
 )

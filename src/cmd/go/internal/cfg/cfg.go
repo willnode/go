@@ -380,10 +380,6 @@ func readEnvFile(file string, source string) {
 	if file == "" {
 		return
 	}
-	if runtime.GOOS == "redox" {
-		// page fault on open in rustc
-		return
-	}
 	data, err := os.ReadFile(file)
 	if err != nil {
 		return

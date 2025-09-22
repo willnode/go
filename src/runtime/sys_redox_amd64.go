@@ -14,6 +14,8 @@ import (
 //go:cgo_export_dynamic runtime.etext _etext
 //go:cgo_export_dynamic runtime.edata _edata
 
+//TODO: Shouldn't this be libc.so because we're statically linking?
+
 //go:cgo_import_dynamic libc___errno __errno "libc.so"
 //go:cgo_import_dynamic libc_clock_gettime clock_gettime "libc.so"
 //go:cgo_import_dynamic libc_exit _exit "libc.so"
@@ -210,7 +212,7 @@ func readRandom(r []byte) int {
 	// print("openrandom\n")
 	// var pp *byte
 	// pp = &urandom_dev[0]
-	// print("firstrandom ", *pp, "\n")
+	// print("firstrandom ", uintptr(unsafe.Pointer(pp)), "\n")
 	// fd := open(pp, _O_RDONLY, 0)
 	// print("readrandom\n")
 	// n := read(fd, unsafe.Pointer(&r[0]), int32(len(r)))
@@ -462,6 +464,7 @@ func nanotime1() int64 {
 //go:nosplit
 func open(path *byte, mode, perm int32) int32 {
 	print("bout to run call libc_open\n")
+	print("at", uintptr(noescape(unsafe.Pointer(&libc_open))),"\n")
 	return int32(sysvicall3(&libc_open, uintptr(unsafe.Pointer(path)), uintptr(mode), uintptr(perm)))
 }
 

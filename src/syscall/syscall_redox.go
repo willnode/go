@@ -19,9 +19,32 @@ func Syscall6(trap, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errno)
 func RawSyscall(trap, a1, a2, a3 uintptr) (r1, r2 uintptr, err Errno)
 func RawSyscall6(trap, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errno)
 
-// Implemented in asm_redox_amd64.s.
+// We use cgo instead of asmcgo because of issues that ends in protection fault
+// We cannot use cgocall in runtime because it uses malloc
 func rawSysvicall6(trap, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errno)
 func sysvicall6(trap, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errno)
+
+
+// linked by runtime.cgocall.go
+//
+//go:uintptrescapes
+func cgocaller(unsafe.Pointer, ...uintptr) uintptr
+
+func syscgocall6(trap unsafe.Pointer, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errno) {
+	if ret := cgocaller(trap, a1, a2, a3, a4, a5, a6); ret != 0 {
+		if ret < 0 {
+			err = Errno(ret)
+		} else {
+			r1 = ret
+		}
+	}
+	return
+}
+
+func rawsyscgocall6(trap unsafe.Pointer, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errno) {
+	return syscgocall6(trap, nargs, a1, a2, a3, a4, a5, a6)
+}
+
 
 func direntIno(buf []byte) (uint64, bool) {
 	return readInt(buf, unsafe.Offsetof(Dirent{}.Ino), unsafe.Sizeof(Dirent{}.Ino))
@@ -271,7 +294,7 @@ func UtimesNano(path string, ts []Timespec) error {
 // FcntlFlock performs a fcntl syscall for the [F_GETLK], [F_SETLK] or [F_SETLKW] command.
 func FcntlFlock(fd uintptr, cmd int, lk *Flock_t) error {
 	print("bout to sys call libc_fcntl\n")
-	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_fcntl)), 3, uintptr(fd), uintptr(cmd), uintptr(unsafe.Pointer(lk)), 0, 0, 0)
+	_, _, e1 := syscgocall6(unsafe.Pointer(&libc_fcntl), 3, uintptr(fd), uintptr(cmd), uintptr(unsafe.Pointer(lk)), 0, 0, 0)
 	if e1 != 0 {
 		return e1
 	}
@@ -396,7 +419,6 @@ func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags i
  * Exposed directly
  */
 //sys	Access(path string, mode uint32) (err error)
-//sys	Adjtime(delta *Timeval, olddelta *Timeval) (err error)
 //sys	Chdir(path string) (err error)
 //sys	Chmod(path string, mode uint32) (err error)
 //sys	Chown(path string, uid int, gid int) (err error)
@@ -473,26 +495,15 @@ func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags i
 //sys	setsockopt(s int, level int, name int, val unsafe.Pointer, vallen uintptr) (err error) = libc.setsockopt
 //sys	recvfrom(fd int, p []byte, flags int, from *RawSockaddrAny, fromlen *_Socklen) (n int, err error) = libc.recvfrom
 //sys	recvmsg(s int, msg *Msghdr, flags int) (n int, err error) = libc.recvmsg
-//sys	getexecname() (path unsafe.Pointer, err error) = libc.getexecname
 //TODO sys	utimensat(dirfd int, path string, times *[2]Timespec, flag int) (err error)
 
 func Getexecname() (path string, err error) {
-	ptr, err := getexecname()
-	if err != nil {
-		return "", err
-	}
-	bytes := (*[1 << 29]byte)(ptr)[:]
-	for i, b := range bytes {
-		if b == 0 {
-			return string(bytes[:i]), nil
-		}
-	}
-	panic("unreachable")
+	panic("Getexecname TODO")
 }
 
 func readlen(fd int, buf *byte, nbuf int) (n int, err error) {
 	print("bout to sys call libc_read\n")
-	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&libc_read)), 3, uintptr(fd), uintptr(unsafe.Pointer(buf)), uintptr(nbuf), 0, 0, 0)
+	r0, _, e1 := syscgocall6(unsafe.Pointer(&libc_read), 3, uintptr(fd), uintptr(unsafe.Pointer(buf)), uintptr(nbuf), 0, 0, 0)
 	n = int(r0)
 	if e1 != 0 {
 		err = e1

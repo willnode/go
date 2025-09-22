@@ -66,15 +66,10 @@ var (
 //go:linkname syscall_sysvicall6
 //go:cgo_unsafe_args
 func syscall_sysvicall6(fn, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2, err uintptr) {
-	call := libcall{
-		fn:   fn,
-		n:    nargs,
-		args: uintptr(unsafe.Pointer(&a1)),
-	}
 	entersyscallblock()
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
+	r1, r2, err = syscall_rawsysvicall6(fn, nargs, a1, a2, a3, a4, a5, a6)
 	exitsyscall()
-	return call.r1, call.r2, call.err
+	return
 }
 
 //go:nosplit
@@ -84,10 +79,10 @@ func syscall_rawsysvicall6(fn, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2, e
 	call := libcall{
 		fn:   fn,
 		n:    nargs,
-		args: uintptr(unsafe.Pointer(&a1)),
+		args: uintptr(noescape(unsafe.Pointer(&a1))),
 	}
 	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	return call.r1, call.r2, call.err
+	return call.r1, 0, call.err
 }
 
 // TODO(aram): Once we remove all instances of C calling sysvicallN, make

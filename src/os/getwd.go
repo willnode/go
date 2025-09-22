@@ -37,10 +37,6 @@ func Getwd() (dir string, err error) {
 	// if $PWD is set and matches ".", use it.
 	var dot FileInfo
 	dir = Getenv("PWD")
-	if runtime.GOOS == "redox" {
-		// statNolog causes page fault in redox
-		return dir, nil
-	}
 	if len(dir) > 0 && dir[0] == '/' {
 		dot, err = statNolog(".")
 		if err != nil {
