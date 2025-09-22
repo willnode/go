@@ -16,23 +16,22 @@ var (
 	netpollWakeSig    atomic.Uint32      // used to avoid duplicate calls of netpollBreak
 )
 
-//go:cgo_import_dynamic libc_epoll_create1 epoll_create1 "libc.so"
-//go:cgo_import_dynamic libc_epoll_ctl epoll_ctl "libc.so"
-//go:cgo_import_dynamic libc_epoll_wait epoll_wait "libc.so"
-
-//go:linkname libc_epoll_create1 libc_epoll_create1
-//go:linkname libc_epoll_ctl libc_epoll_ctl
-//go:linkname libc_epoll_wait libc_epoll_wait
+//go:cgo_import_static _cgo_libc_epoll_create1
+//go:cgo_import_static _cgo_libc_epoll_ctl
+//go:cgo_import_static _cgo_libc_epoll_wait
+//go:linkname libc_epoll_create1 _cgo_libc_epoll_create1
+//go:linkname libc_epoll_ctl _cgo_libc_epoll_ctl
+//go:linkname libc_epoll_wait _cgo_libc_epoll_wait
 
 var (
 	libc_epoll_create1,
 	libc_epoll_ctl,
-	libc_epoll_wait libcFunc
+	libc_epoll_wait byte
 )
 
 type EpollEvent struct {
 	Events uint32
-	Data   [8]byte // unaligned uintptr
+	Data   [16]byte // unaligned uintptr
 }
 
 const (
@@ -52,21 +51,57 @@ const (
 	EPOLL_CTL_MOD = 0x3
 )
 
+//go:nosplit
+func syscall_epoll_create1(fn unsafe.Pointer, args uintptr) uintptr {
+	as := argset{args: unsafe.Pointer(&args)}
+	asmcgocall(fn, unsafe.Pointer(&as))
+	return as.retval
+}
+
+//go:nosplit
+func syscall_epoll_ctl(fn unsafe.Pointer, a, b, c, d uintptr) uintptr {
+	as := argset{args: unsafe.Pointer(&a)}
+	asmcgocall(fn, unsafe.Pointer(&as))
+	return as.retval
+}
+
+//go:nosplit
+func syscall_epoll_wait(fn unsafe.Pointer, a, b, c, d uintptr) uintptr {
+	as := argset{args: unsafe.Pointer(&a)}
+	asmcgocall(fn, unsafe.Pointer(&as))
+	return as.retval
+}
+
 func epoll_create1(flags int32) (r1 int32, err int32) {
 	print("bout to run call libc_epoll_create1\n")
-	r, e := sysvicall1Err(&libc_epoll_create1, uintptr(flags))
-	return int32(r), int32(e)
+	if ret := syscall_epoll_create1(unsafe.Pointer(&libc_epoll_create1), uintptr(flags)); ret != 0 {
+		if ret < 0 {
+			err = int32(ret)
+		} else {
+			r1 = int32(ret)
+		}
+	}
+	return
 }
 
 func epoll_ctl(epfd int32, op int32, fd int32, event *EpollEvent) int32 {
 	print("bout to run call libc_epoll_ctl\n")
-	return int32(sysvicall4(&libc_epoll_ctl, uintptr(epfd), uintptr(op), uintptr(fd), uintptr(unsafe.Pointer(event))))
+	if ret := syscall_epoll_ctl(unsafe.Pointer(&libc_epoll_ctl), uintptr(epfd), uintptr(op), uintptr(fd), uintptr(unsafe.Pointer(event))); ret != 0 {
+		return int32(ret)
+	}
+	return 0
 }
 
 func epoll_wait(epfd int32, events *EpollEvent, maxevents int32, timeout int32) (r1 int32, err int32) {
 	print("bout to run call libc_epoll_wait\n")
-	r, e := sysvicall4Err(&libc_epoll_wait, uintptr(epfd), uintptr(unsafe.Pointer(events)), uintptr(maxevents), uintptr(timeout))
-	return int32(r), int32(e)
+	if ret := syscall_epoll_wait(unsafe.Pointer(&libc_epoll_wait), uintptr(epfd), uintptr(unsafe.Pointer(events)), uintptr(maxevents), uintptr(timeout)); ret != 0 {
+		if ret < 0 {
+			err = int32(ret)
+		} else {
+			r1 = int32(ret)
+		}
+	}
+	return
 }
 
 func netpollinit() {

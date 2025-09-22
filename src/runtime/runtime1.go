@@ -78,12 +78,6 @@ func goargs() {
 	for i := int32(0); i < argc; i++ {
 		argslice[i] = gostringnocopy(argv_index(argv, i))
 	}
-	if GOOS == "redox" {
-		print("argv detect start\n")
-		for i := int32(0); i < argc; i++ {
-			print("got arg: ", argslice[i], "\n")
-		}
-	}
 }
 
 func goenvs_unix() {

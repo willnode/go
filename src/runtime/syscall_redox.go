@@ -229,7 +229,7 @@ func syscall_ioctl(fd, req, arg uintptr) (err uintptr) {
 //
 //go:linkname syscall_rawsyscall
 func syscall_rawsyscall(trap, a1, a2, a3 uintptr) (r1, r2, err uintptr) {
-	panic("RawSyscall not available on Solaris")
+	panic("RawSyscall not available on Redox")
 }
 
 // This is syscall.RawSyscall6, it exists to avoid a linker error because
@@ -237,7 +237,7 @@ func syscall_rawsyscall(trap, a1, a2, a3 uintptr) (r1, r2, err uintptr) {
 //
 //go:linkname syscall_rawsyscall6
 func syscall_rawsyscall6(trap, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2, err uintptr) {
-	panic("RawSyscall6 not available on Solaris")
+	panic("RawSyscall6 not available on Redox")
 }
 
 //go:nosplit

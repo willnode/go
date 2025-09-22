@@ -21,6 +21,7 @@
 #include <sys/utsname.h>
 #include <sys/uio.h>
 #include <sys/mman.h>
+#include <sys/epoll.h>
 
 #include "libcgo.h"
 
@@ -644,6 +645,32 @@ _cgo_libc_getsockname(argset_t* x) {
 	struct sockaddr* addr = (struct sockaddr*)x->args[1];
 	socklen_t* addrlen = (socklen_t*)x->args[2];
 	SET_RETVAL(getsockname(sockfd, addr, addrlen));
+}
+
+// --- Epoll Operations ---
+
+void
+_cgo_libc_epoll_create1(argset_t* x) {
+	int flags = (int)x->args[0];
+	SET_RETVAL(epoll_create1(flags));
+}
+
+void
+_cgo_libc_epoll_ctl(argset_t* x) {
+	int epfd = (int)x->args[0];
+	int op = (int)x->args[1];
+	int fd = (int)x->args[2];
+	struct epoll_event* event = (struct epoll_event*)x->args[3];
+	SET_RETVAL(epoll_ctl(epfd, op, fd, event));
+}
+
+void
+_cgo_libc_epoll_wait(argset_t* x) {
+	int epfd = (int)x->args[0];
+	struct epoll_event* events = (struct epoll_event*)x->args[1];
+	int maxevents = (int)x->args[2];
+	int timeout = (int)x->args[3];
+	SET_RETVAL(epoll_wait(epfd, events, maxevents, timeout));
 }
 
 
