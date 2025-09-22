@@ -30,13 +30,17 @@ func sysvicall6(trap, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, er
 //go:uintptrescapes
 func cgocaller(unsafe.Pointer, ...uintptr) uintptr
 
+// linked by runtime.cgocall.go
+//
+//go:uintptrescapes
+func cgocaller2(unsafe.Pointer, ...uintptr) (r0 uintptr, err int32)
+
 func syscgocall6(trap unsafe.Pointer, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errno) {
-	if ret := cgocaller(trap, a1, a2, a3, a4, a5, a6); ret != 0 {
-		if ret < 0 {
-			err = Errno(ret)
-		} else {
-			r1 = ret
-		}
+	ret, errno := cgocaller2(trap, a1, a2, a3, a4, a5, a6)
+	if errno != 0 {
+		err = Errno(errno)
+	} else {
+		r1 = ret
 	}
 	return
 }

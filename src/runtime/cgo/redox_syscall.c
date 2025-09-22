@@ -29,6 +29,7 @@
 typedef struct {
 	uintptr_t* args;
 	uintptr_t retval;
+	int error;
 } argset_t;
 
 // libc backed posix-compliant syscalls.
@@ -39,7 +40,7 @@ typedef struct {
 #define SET_RETVAL(fn) \
   uintptr_t ret = (uintptr_t) fn ; \
   if (ret == (uintptr_t) -1) {	   \
-    x->retval = (uintptr_t) errno; \
+    x->error =              errno; \
   } else                           \
     x->retval = ret
 
