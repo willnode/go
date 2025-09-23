@@ -506,6 +506,7 @@ func Fstat(fd int, stat *Stat_t) (err error) {
 	print("bout to sys call libc_Fstat\n")
 	_, _, e1 := syscgocall6(unsafe.Pointer(&libc_Fstat), 2, uintptr(fd), uintptr(unsafe.Pointer(stat)), 0, 0, 0, 0)
 	if e1 != 0 {
+		print("got errno libc_Fstat:", e1, "\n")
 		err = errnoErr(e1)
 	}
 	return
@@ -671,9 +672,10 @@ func Lstat(path string, stat *Stat_t) (err error) {
 	if err != nil {
 		return
 	}
-	print("bout to sys call libc_Lstat\n")
+	print("bout to sys call libc_Lstat: ", path, "\n")
 	_, _, e1 := syscgocall6(unsafe.Pointer(&libc_Lstat), 2, uintptr(unsafe.Pointer(_p0)), uintptr(unsafe.Pointer(stat)), 0, 0, 0, 0)
 	if e1 != 0 {
+		print("got errno libc_Lstat:", e1, "\n")
 		err = errnoErr(e1)
 	}
 	return
@@ -730,7 +732,7 @@ func Open(path string, mode int, perm uint32) (fd int, err error) {
 	if err != nil {
 		return
 	}
-	print("bout to sys call libc_Open\n")
+	print("bout to sys call libc_Open:", path, " mode ", mode, "\n")
 	r0, _, e1 := syscgocall6(unsafe.Pointer(&libc_Open), 3, uintptr(unsafe.Pointer(_p0)), uintptr(mode), uintptr(perm), 0, 0, 0)
 	fd = int(r0)
 	if e1 != 0 {
@@ -1016,9 +1018,10 @@ func Stat(path string, stat *Stat_t) (err error) {
 	if err != nil {
 		return
 	}
-	print("bout to sys call libc_Stat\n")
+	print("bout to sys call libc_Stat:", path, "\n")
 	_, _, e1 := syscgocall6(unsafe.Pointer(&libc_Stat), 2, uintptr(unsafe.Pointer(_p0)), uintptr(unsafe.Pointer(stat)), 0, 0, 0, 0)
 	if e1 != 0 {
+		print("got errno libc_Stat:", e1, "\n")
 		err = errnoErr(e1)
 	}
 	return
@@ -1084,6 +1087,7 @@ func PosixGetdents(fd int, buf []byte, flags int) (n int, err error) {
 	r0, _, e1 := syscgocall6(unsafe.Pointer(&libc_PosixGetdents), 4, uintptr(unsafe.Pointer(_p0)), uintptr(len(buf)), uintptr(flags), 0, 0, 0)
 	n = int(r0)
 	if e1 != 0 {
+		print("got errno libc_PosixGetdents:", e1, "\n")
 		err = errnoErr(e1)
 	}
 	return

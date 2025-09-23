@@ -14,11 +14,9 @@ import (
 //go:cgo_export_dynamic runtime.etext _etext
 //go:cgo_export_dynamic runtime.edata _edata
 
-//TODO: Shouldn't this be libc.so because we're statically linking?
-
 //go:cgo_import_dynamic libc___errno __errno "libc.so"
 //go:cgo_import_dynamic libc_clock_gettime clock_gettime "libc.so"
-//go:cgo_import_dynamic libc_exit _exit "libc.so"
+//go:cgo_import_static _cgo_libc_exit
 //go:cgo_import_dynamic libc_getcontext getcontext "libc.so"
 //go:cgo_import_dynamic libc_kill kill "libc.so"
 //go:cgo_import_dynamic libc_madvise madvise "libc.so"
@@ -53,7 +51,7 @@ import (
 
 //go:linkname libc___errno libc___errno
 //go:linkname libc_clock_gettime libc_clock_gettime
-//go:linkname libc_exit libc_exit
+//go:linkname libc_exit _cgo_libc_exit
 //go:linkname libc_getcontext libc_getcontext
 //go:linkname libc_kill libc_kill
 //go:linkname libc_madvise libc_madvise
@@ -89,7 +87,6 @@ import (
 var (
 	libc___errno,
 	libc_clock_gettime,
-	libc_exit,
 	libc_getcontext,
 	libc_kill,
 	libc_madvise,
@@ -121,6 +118,10 @@ var (
 	libc_usleep,
 	libc_write,
 	libc_pipe2 libcFunc
+)
+
+var (
+	libc_exit byte
 )
 
 var sigset_all = sigset{[2]uint32{^uint32(0), ^uint32(0)}}
@@ -223,14 +224,9 @@ func readRandom(r []byte) int {
 }
 
 func goenvs() {
-
-	n := int32(0)
-	// for argv_index(argv, argc+1+n) != nil {
-	// 	n++
-	// }
-
+	// not correct
 	// goenvs_unix()
-	envs = make([]string, n)
+	envs = make([]string, 0)
 }
 
 // Called to initialize a new m (including the bootstrap m).
@@ -413,7 +409,7 @@ func closefd(fd int32) int32 {
 //go:nosplit
 func exit(r int32) {
 	print("bout to run call libc_exit\n")
-	sysvicall1(&libc_exit, uintptr(r))
+	cgocaller1(unsafe.Pointer(&libc_exit), uintptr(r));
 }
 
 //go:nosplit
@@ -450,7 +446,6 @@ func doMmap(addr, n, prot, flags, fd, off uintptr) (uintptr, uintptr) {
 
 //go:nosplit
 func munmap(addr unsafe.Pointer, n uintptr) {
-	// print("bout to run call libc_munmap\n")
 	sysvicall2(&libc_munmap, uintptr(addr), uintptr(n))
 }
 
@@ -561,7 +556,6 @@ func setitimer(which int32, value *itimerval, ovalue *itimerval) /* int32 */ {
 //go:nosplit
 //go:nowritebarrierrec
 func sigaction(sig uint32, act *sigactiont, oact *sigactiont) /* int32 */ {
-	// print("bout to run call libc_sigaction\n")
 	sysvicall3(&libc_sigaction, uintptr(sig), uintptr(unsafe.Pointer(act)), uintptr(unsafe.Pointer(oact)))
 }
 

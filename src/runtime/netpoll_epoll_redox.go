@@ -51,55 +51,32 @@ const (
 	EPOLL_CTL_MOD = 0x3
 )
 
-//go:nosplit
-func syscall_epoll_create1(fn unsafe.Pointer, args uintptr) uintptr {
-	as := argset{args: unsafe.Pointer(&args)}
-	asmcgocall(fn, unsafe.Pointer(&as))
-	return as.retval
-}
-
-//go:nosplit
-func syscall_epoll_ctl(fn unsafe.Pointer, a, b, c, d uintptr) uintptr {
-	as := argset{args: unsafe.Pointer(&a)}
-	asmcgocall(fn, unsafe.Pointer(&as))
-	return as.retval
-}
-
-//go:nosplit
-func syscall_epoll_wait(fn unsafe.Pointer, a, b, c, d uintptr) uintptr {
-	as := argset{args: unsafe.Pointer(&a)}
-	asmcgocall(fn, unsafe.Pointer(&as))
-	return as.retval
-}
-
 func epoll_create1(flags int32) (r1 int32, err int32) {
 	print("bout to run call libc_epoll_create1\n")
-	if ret := syscall_epoll_create1(unsafe.Pointer(&libc_epoll_create1), uintptr(flags)); ret != 0 {
-		if ret < 0 {
-			err = int32(ret)
-		} else {
-			r1 = int32(ret)
-		}
+	ret, errno := cgocaller1(unsafe.Pointer(&libc_epoll_create1), uintptr(flags));
+	if errno != 0 {
+		err = errno
+	} else {
+		r1 = int32(ret)
 	}
 	return
 }
 
 func epoll_ctl(epfd int32, op int32, fd int32, event *EpollEvent) int32 {
 	print("bout to run call libc_epoll_ctl\n")
-	if ret := syscall_epoll_ctl(unsafe.Pointer(&libc_epoll_ctl), uintptr(epfd), uintptr(op), uintptr(fd), uintptr(unsafe.Pointer(event))); ret != 0 {
-		return int32(ret)
+	if _, errno := cgocaller4(unsafe.Pointer(&libc_epoll_ctl), uintptr(epfd), uintptr(op), uintptr(fd), uintptr(unsafe.Pointer(event))); errno != 0 {
+		return errno
 	}
 	return 0
 }
 
 func epoll_wait(epfd int32, events *EpollEvent, maxevents int32, timeout int32) (r1 int32, err int32) {
 	print("bout to run call libc_epoll_wait\n")
-	if ret := syscall_epoll_wait(unsafe.Pointer(&libc_epoll_wait), uintptr(epfd), uintptr(unsafe.Pointer(events)), uintptr(maxevents), uintptr(timeout)); ret != 0 {
-		if ret < 0 {
-			err = int32(ret)
-		} else {
-			r1 = int32(ret)
-		}
+	ret, errno := cgocaller4(unsafe.Pointer(&libc_epoll_wait), uintptr(epfd), uintptr(unsafe.Pointer(events)), uintptr(maxevents), uintptr(timeout));
+	if errno != 0 {
+		err = errno
+	} else {
+		r1 = int32(ret)
 	}
 	return
 }

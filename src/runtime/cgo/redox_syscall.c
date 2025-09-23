@@ -13,6 +13,10 @@
 #include <errno.h>
 #include <time.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <sched.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -43,6 +47,12 @@ typedef struct {
     x->error =              errno; \
   } else                           \
     x->retval = ret
+
+// SET_PTHREAD_RETVAL handles the return convention for most pthread functions.
+// They return 0 on success and an error number on failure.
+#define SET_PTHREAD_RETVAL(fn) \
+	x->retval = (uintptr_t) fn;
+
 
 // --- File Descriptor Operations ---
 
@@ -151,6 +161,16 @@ _cgo_libc_writev(argset_t* x) {
     const struct iovec* iov = (const struct iovec*)x->args[1];
     int iovcnt = (int)x->args[2];
     SET_RETVAL(writev(fd, iov, iovcnt));
+}
+
+void
+_cgo_libc_select(argset_t* x) {
+	int nfds = (int)x->args[0];
+	fd_set* readfds = (fd_set*)x->args[1];
+	fd_set* writefds = (fd_set*)x->args[2];
+	fd_set* exceptfds = (fd_set*)x->args[3];
+	struct timeval* timeout = (struct timeval*)x->args[4];
+	SET_RETVAL(select(nfds, readfds, writefds, exceptfds, timeout));
 }
 
 // --- Filesystem Operations ---
@@ -487,10 +507,52 @@ _cgo_libc_setpgid(argset_t* x) {
 }
 
 void
+_cgo_libc_sched_yield(argset_t* x) {
+	SET_RETVAL(sched_yield());
+}
+
+void
+_cgo_libc_exit(argset_t* x) {
+	int status = (int)x->args[0];
+	_exit(status);
+}
+
+// --- Signal Handling ---
+
+void
 _cgo_libc_kill(argset_t* x) {
 	pid_t pid = (pid_t)x->args[0];
 	int sig = (int)x->args[1];
 	SET_RETVAL(kill(pid, sig));
+}
+
+void
+_cgo_libc_raise(argset_t* x) {
+	int sig = (int)x->args[0];
+	SET_RETVAL(raise(sig));
+}
+
+void
+_cgo_libc_sigaction(argset_t* x) {
+	int signum = (int)x->args[0];
+	const struct sigaction* act = (const struct sigaction*)x->args[1];
+	struct sigaction* oldact = (struct sigaction*)x->args[2];
+	SET_RETVAL(sigaction(signum, act, oldact));
+}
+
+void
+_cgo_libc_sigaltstack(argset_t* x) {
+	const stack_t* ss = (const stack_t*)x->args[0];
+	stack_t* old_ss = (stack_t*)x->args[1];
+	SET_RETVAL(sigaltstack(ss, old_ss));
+}
+
+void
+_cgo_libc_sigprocmask(argset_t* x) {
+	int how = (int)x->args[0];
+	const sigset_t* set = (const sigset_t*)x->args[1];
+	sigset_t* oldset = (sigset_t*)x->args[2];
+	SET_RETVAL(sigprocmask(how, set, oldset));
 }
 
 // --- Memory Management ---
@@ -515,6 +577,20 @@ _cgo_libc_munmap(argset_t* x) {
 	void* addr = (void*)x->args[0];
 	size_t length = (size_t)x->args[1];
 	SET_RETVAL(munmap(addr, length));
+}
+
+void
+_cgo_libc_madvise(argset_t* x) {
+	void* addr = (void*)x->args[0];
+	size_t length = (size_t)x->args[1];
+	int advice = (int)x->args[2];
+	SET_RETVAL(madvise(addr, length, advice));
+}
+
+void
+_cgo_libc_malloc(argset_t* x) {
+	size_t size = (size_t)x->args[0];
+	x->retval = (uintptr_t)malloc(size);
 }
 
 // --- Network Operations ---
@@ -690,11 +766,136 @@ _cgo_libc_nanosleep(argset_t* x) {
 	SET_RETVAL(nanosleep(req, rem));
 }
 
+void
+_cgo_libc_clock_gettime(argset_t* x) {
+	clockid_t clk_id = (clockid_t)x->args[0];
+	struct timespec* tp = (struct timespec*)x->args[1];
+	SET_RETVAL(clock_gettime(clk_id, tp));
+}
+
+void
+_cgo_libc_setitimer(argset_t* x) {
+	int which = (int)x->args[0];
+	const struct itimerval* new_value = (const struct itimerval*)x->args[1];
+	struct itimerval* old_value = (struct itimerval*)x->args[2];
+	SET_RETVAL(setitimer(which, new_value, old_value));
+}
+
+void
+_cgo_libc_usleep(argset_t* x) {
+	useconds_t usec = (useconds_t)x->args[0];
+	SET_RETVAL(usleep(usec));
+}
+
+
+// --- Pthread Operations ---
+
+void
+_cgo_libc_pthread_attr_destroy(argset_t* x) {
+	pthread_attr_t* attr = (pthread_attr_t*)x->args[0];
+	SET_PTHREAD_RETVAL(pthread_attr_destroy(attr));
+}
+
+void
+_cgo_libc_pthread_attr_getstack(argset_t* x) {
+	const pthread_attr_t* attr = (const pthread_attr_t*)x->args[0];
+	void** stackaddr = (void**)x->args[1];
+	size_t* stacksize = (size_t*)x->args[2];
+	SET_PTHREAD_RETVAL(pthread_attr_getstack(attr, stackaddr, stacksize));
+}
+
+void
+_cgo_libc_pthread_attr_init(argset_t* x) {
+	pthread_attr_t* attr = (pthread_attr_t*)x->args[0];
+	SET_PTHREAD_RETVAL(pthread_attr_init(attr));
+}
+
+void
+_cgo_libc_pthread_attr_setdetachstate(argset_t* x) {
+	pthread_attr_t* attr = (pthread_attr_t*)x->args[0];
+	int detachstate = (int)x->args[1];
+	SET_PTHREAD_RETVAL(pthread_attr_setdetachstate(attr, detachstate));
+}
+
+void
+_cgo_libc_pthread_attr_setstack(argset_t* x) {
+	pthread_attr_t* attr = (pthread_attr_t*)x->args[0];
+	void* stackaddr = (void*)x->args[1];
+	size_t stacksize = (size_t)x->args[2];
+	SET_PTHREAD_RETVAL(pthread_attr_setstack(attr, stackaddr, stacksize));
+}
+
+void
+_cgo_libc_pthread_create(argset_t* x) {
+	pthread_t* thread = (pthread_t*)x->args[0];
+	const pthread_attr_t* attr = (const pthread_attr_t*)x->args[1];
+	void* (*start_routine)(void*) = (void* (*)(void*))x->args[2];
+	void* arg = (void*)x->args[3];
+	SET_PTHREAD_RETVAL(pthread_create(thread, attr, start_routine, arg));
+}
+
+void
+_cgo_libc_pthread_self(argset_t* x) {
+	x->retval = (uintptr_t)pthread_self();
+}
+
+void
+_cgo_libc_pthread_kill(argset_t* x) {
+	pthread_t thread = (pthread_t)x->args[0];
+	int sig = (int)x->args[1];
+	SET_PTHREAD_RETVAL(pthread_kill(thread, sig));
+}
+
+
+// --- Semaphore Operations ---
+
+void
+_cgo_libc_sem_init(argset_t* x) {
+	sem_t* sem = (sem_t*)x->args[0];
+	int pshared = (int)x->args[1];
+	unsigned int value = (unsigned int)x->args[2];
+	SET_RETVAL(sem_init(sem, pshared, value));
+}
+
+void
+_cgo_libc_sem_post(argset_t* x) {
+	sem_t* sem = (sem_t*)x->args[0];
+	SET_RETVAL(sem_post(sem));
+}
+
+void
+_cgo_libc_sem_timedwait(argset_t* x) {
+	sem_t* sem = (sem_t*)x->args[0];
+	const struct timespec* abs_timeout = (const struct timespec*)x->args[1];
+	SET_RETVAL(sem_timedwait(sem, abs_timeout));
+}
+
+void
+_cgo_libc_sem_wait(argset_t* x) {
+	sem_t* sem = (sem_t*)x->args[0];
+	SET_RETVAL(sem_wait(sem));
+}
+
+
 // --- System Information ---
 
 void
 _cgo_libc_uname(argset_t* x) {
 	struct utsname* buf = (struct utsname*)x->args[0];
 	SET_RETVAL(uname(buf));
+}
+
+void
+_cgo_libc_sysconf(argset_t* x) {
+	int name = (int)x->args[0];
+	long ret;
+	// sysconf can return -1 as a valid value
+	errno = 0;
+	ret = sysconf(name);
+	if (ret == -1 && errno != 0) {
+		x->retval = (uintptr_t)errno;
+	} else {
+		x->retval = (uintptr_t)ret;
+	}
 }
 

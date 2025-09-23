@@ -11,9 +11,6 @@ import (
 	"unsafe"
 )
 
-// https://github.com/WebAssembly/WASI/blob/main/legacy/preview1/docs.md#-dirent-record
-const sizeOfDirent = 24
-
 func direntIno(buf []byte) (uint64, bool) {
 	return readInt(buf, unsafe.Offsetof(syscall.Dirent{}.Ino), unsafe.Sizeof(syscall.Dirent{}.Ino))
 }

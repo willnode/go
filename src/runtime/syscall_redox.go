@@ -154,7 +154,7 @@ func syscall_execve(path, argv, envp uintptr) (err uintptr) {
 //go:nosplit
 //go:linkname syscall_exit
 func syscall_exit(code uintptr) {
-	sysvicall1(&libc_exit, code)
+	cgocaller1(unsafe.Pointer(&libc_exit), code);
 }
 
 //go:nosplit

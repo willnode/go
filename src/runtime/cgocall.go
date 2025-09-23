@@ -124,6 +124,25 @@ func syscall_cgocaller2(fn unsafe.Pointer, args ...uintptr) (r0 uintptr, err int
 	return
 }
 
+//go:nosplit
+func cgocaller1(fn unsafe.Pointer, a uintptr) (r0 uintptr, err int32) {
+	as := argset{args: unsafe.Pointer(&a)}
+	asmcgocall(fn, unsafe.Pointer(&as))
+	r0 = as.retval
+	err = as.errno
+	return
+}
+
+//go:nosplit
+func cgocaller4(fn unsafe.Pointer, a, b, c, d uintptr) (r0 uintptr, err int32) {
+	as := argset{args: unsafe.Pointer(&a)}
+	asmcgocall(fn, unsafe.Pointer(&as))
+	r0 = as.retval
+	err = as.errno
+	return
+}
+
+
 var ncgocall uint64 // number of cgo calls in total for dead m
 
 // Call from Go to C.
