@@ -272,6 +272,7 @@ func pipe2(p *[2]_C_int, flags int) (err error) {
 	print("bout to sys call libc_pipe2\n")
 	_, _, e1 := rawsyscgocall6(unsafe.Pointer(&libc_pipe2), 2, uintptr(unsafe.Pointer(p)), uintptr(flags), 0, 0, 0, 0)
 	if e1 != 0 {
+		print("got errno libc_pipe2:", e1, "\n")
 		err = errnoErr(e1)
 	}
 	return
@@ -319,10 +320,11 @@ func setgroups(ngid int, gid *_Gid_t) (err error) {
 
 
 func fcntl(fd int, cmd int, arg int) (val int, err error) {
-	print("bout to sys call libc_fcntl\n")
+	print("bout to sys call libc_fcntl: cmd ", cmd, " arg ",arg ,"\n")
 	r0, _, e1 := syscgocall6(unsafe.Pointer(&libc_fcntl), 3, uintptr(fd), uintptr(cmd), uintptr(arg), 0, 0, 0)
 	val = int(r0)
 	if e1 != 0 {
+		print("got errno libc_fcntl:", e1, "\n")
 		err = errnoErr(e1)
 	}
 	return
@@ -1084,7 +1086,7 @@ func PosixGetdents(fd int, buf []byte, flags int) (n int, err error) {
 		_p0 = &buf[0]
 	}
 	print("bout to sys call libc_PosixGetdents\n")
-	r0, _, e1 := syscgocall6(unsafe.Pointer(&libc_PosixGetdents), 4, uintptr(unsafe.Pointer(_p0)), uintptr(len(buf)), uintptr(flags), 0, 0, 0)
+	r0, _, e1 := syscgocall6(unsafe.Pointer(&libc_PosixGetdents), 4, uintptr(fd), uintptr(unsafe.Pointer(_p0)), uintptr(len(buf)), uintptr(flags), 0, 0)
 	n = int(r0)
 	if e1 != 0 {
 		print("got errno libc_PosixGetdents:", e1, "\n")

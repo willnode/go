@@ -7,6 +7,7 @@ package runtime
 import (
 	"internal/abi"
 	"internal/runtime/atomic"
+	"internal/goarch"
 	"unsafe"
 )
 
@@ -15,8 +16,10 @@ import (
 //go:cgo_export_dynamic runtime.edata _edata
 
 //go:cgo_import_dynamic libc___errno __errno "libc.so"
+//go:cgo_import_static _cgo_libc_environ
 //go:cgo_import_dynamic libc_clock_gettime clock_gettime "libc.so"
 //go:cgo_import_static _cgo_libc_exit
+//go:cgo_import_static _cgo_libc_waitpid
 //go:cgo_import_dynamic libc_getcontext getcontext "libc.so"
 //go:cgo_import_dynamic libc_kill kill "libc.so"
 //go:cgo_import_dynamic libc_madvise madvise "libc.so"
@@ -50,6 +53,7 @@ import (
 //go:cgo_import_dynamic libc_pipe2 pipe2 "libc.so"
 
 //go:linkname libc___errno libc___errno
+//go:linkname libc_environ _cgo_libc_environ
 //go:linkname libc_clock_gettime libc_clock_gettime
 //go:linkname libc_exit _cgo_libc_exit
 //go:linkname libc_getcontext libc_getcontext
@@ -121,7 +125,9 @@ var (
 )
 
 var (
-	libc_exit byte
+	libc_environ,
+	libc_exit,
+	libc_waitpid byte
 )
 
 var sigset_all = sigset{[2]uint32{^uint32(0), ^uint32(0)}}
@@ -224,10 +230,18 @@ func readRandom(r []byte) int {
 }
 
 func goenvs() {
-	// not correct
-	// goenvs_unix()
-	envs = make([]string, 0)
+    environs_uintptr := get_environ()
+    envp := (**byte)(unsafe.Pointer(environs_uintptr))
+    n := 0
+    for *(**byte)(add(unsafe.Pointer(envp), uintptr(n)*goarch.PtrSize)) != nil {
+        n++
+    }
+    envs = make([]string, n)
+    for i := 0; i < n; i++ {
+        envs[i] = gostring(argv_index(envp, int32(i)))
+    }
 }
+
 
 // Called to initialize a new m (including the bootstrap m).
 // Called on the parent thread (main thread in case of bootstrap), can allocate memory.
@@ -413,6 +427,13 @@ func exit(r int32) {
 }
 
 //go:nosplit
+func get_environ() uintptr {
+	print("bout to run call libc_environ\n")
+	ret, _ := cgocaller1(unsafe.Pointer(&libc_environ), uintptr(0));
+	return ret
+}
+
+//go:nosplit
 func getcontext(context *ucontext) /* int32 */ {
 	print("bout to run call libc_getcontext\n")
 	sysvicall1(&libc_getcontext, uintptr(unsafe.Pointer(context)))
@@ -562,14 +583,12 @@ func sigaction(sig uint32, act *sigactiont, oact *sigactiont) /* int32 */ {
 //go:nosplit
 //go:nowritebarrierrec
 func sigaltstack(ss *stackt, oss *stackt) /* int32 */ {
-	print("bout to run call libc_sigaltstack\n")
 	sysvicall2(&libc_sigaltstack, uintptr(unsafe.Pointer(ss)), uintptr(unsafe.Pointer(oss)))
 }
 
 //go:nosplit
 //go:nowritebarrierrec
 func sigprocmask(how int32, set *sigset, oset *sigset) /* int32 */ {
-	print("bout to run call libc_sigprocmask\n")
 	sysvicall3(&libc_sigprocmask, uintptr(how), uintptr(unsafe.Pointer(set)), uintptr(unsafe.Pointer(oset)))
 }
 

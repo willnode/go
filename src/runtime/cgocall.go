@@ -125,7 +125,34 @@ func syscall_cgocaller2(fn unsafe.Pointer, args ...uintptr) (r0 uintptr, err int
 }
 
 //go:nosplit
+func cgocaller0(fn unsafe.Pointer) (r0 uintptr, err int32) {
+	as := argset{}
+	asmcgocall(fn, unsafe.Pointer(&as))
+	r0 = as.retval
+	err = as.errno
+	return
+}
+
+//go:nosplit
 func cgocaller1(fn unsafe.Pointer, a uintptr) (r0 uintptr, err int32) {
+	as := argset{args: unsafe.Pointer(&a)}
+	asmcgocall(fn, unsafe.Pointer(&as))
+	r0 = as.retval
+	err = as.errno
+	return
+}
+
+//go:nosplit
+func cgocaller2(fn unsafe.Pointer, a, b uintptr) (r0 uintptr, err int32) {
+	as := argset{args: unsafe.Pointer(&a)}
+	asmcgocall(fn, unsafe.Pointer(&as))
+	r0 = as.retval
+	err = as.errno
+	return
+}
+
+//go:nosplit
+func cgocaller3(fn unsafe.Pointer, a, b, c uintptr) (r0 uintptr, err int32) {
 	as := argset{args: unsafe.Pointer(&a)}
 	asmcgocall(fn, unsafe.Pointer(&as))
 	r0 = as.retval

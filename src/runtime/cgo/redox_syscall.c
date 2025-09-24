@@ -26,6 +26,7 @@
 #include <sys/uio.h>
 #include <sys/mman.h>
 #include <sys/epoll.h>
+#include <sys/wait.h>
 
 #include "libcgo.h"
 
@@ -403,6 +404,19 @@ _cgo_libc_getgroups(argset_t* x) {
 }
 
 // --- Process Management ---
+
+void
+_cgo_libc_fork(argset_t* x) {
+	SET_RETVAL(fork());
+}
+
+void
+_cgo_libc_waitpid(argset_t* x) {
+	pid_t pid = (pid_t)x->args[0];
+	int* status = (int*)x->args[1];
+	int options = (int)x->args[2];
+	SET_RETVAL(waitpid(pid, status, options));
+}
 
 void
 _cgo_libc_setuid(argset_t* x) {
@@ -899,3 +913,8 @@ _cgo_libc_sysconf(argset_t* x) {
 	}
 }
 
+extern char** environ;
+void
+_cgo_libc_environ(argset_t* x) {
+	x->retval = (uintptr_t)environ;
+}

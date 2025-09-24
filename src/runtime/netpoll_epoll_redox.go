@@ -31,7 +31,8 @@ var (
 
 type EpollEvent struct {
 	Events uint32
-	Data   [16]byte // unaligned uintptr
+	Data   [8]byte // unaligned uintptr
+	_Pad   [8]byte
 }
 
 const (
@@ -63,7 +64,7 @@ func epoll_create1(flags int32) (r1 int32, err int32) {
 }
 
 func epoll_ctl(epfd int32, op int32, fd int32, event *EpollEvent) int32 {
-	print("bout to run call libc_epoll_ctl\n")
+	print("bout to run call libc_epoll_ctl: op ", op,"\n")
 	if _, errno := cgocaller4(unsafe.Pointer(&libc_epoll_ctl), uintptr(epfd), uintptr(op), uintptr(fd), uintptr(unsafe.Pointer(event))); errno != 0 {
 		return errno
 	}
@@ -96,14 +97,14 @@ func netpollinit() {
 	ev := EpollEvent{
 		Events: EPOLLIN,
 	}
+	netpollEventFd = uintptr(r)
+	netpollWakeWriter = uintptr(w)
 	*(**uintptr)(unsafe.Pointer(&ev.Data)) = &netpollEventFd
 	errno = epoll_ctl(epfd, EPOLL_CTL_ADD, r, &ev)
 	if errno != 0 {
 		println("runtime: epollctl failed with", errno)
-		throw("runtime: epollctl failed")
+		// throw("runtime: epollctl failed")
 	}
-	netpollEventFd = uintptr(r)
-	netpollWakeWriter = uintptr(w)
 }
 
 func netpollIsPollDescriptor(fd uintptr) bool {

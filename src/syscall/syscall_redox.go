@@ -296,12 +296,7 @@ func UtimesNano(path string, ts []Timespec) error {
 
 // FcntlFlock performs a fcntl syscall for the [F_GETLK], [F_SETLK] or [F_SETLKW] command.
 func FcntlFlock(fd uintptr, cmd int, lk *Flock_t) error {
-	print("bout to sys call libc_fcntl\n")
-	_, _, e1 := syscgocall6(unsafe.Pointer(&libc_fcntl), 3, uintptr(fd), uintptr(cmd), uintptr(unsafe.Pointer(lk)), 0, 0, 0)
-	if e1 != 0 {
-		return e1
-	}
-	return nil
+	panic("TODO FcntlFlock")
 }
 
 func anyToSockaddr(rsa *RawSockaddrAny) (Sockaddr, error) {

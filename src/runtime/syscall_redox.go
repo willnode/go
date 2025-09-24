@@ -11,6 +11,7 @@ import "unsafe"
 //go:cgo_import_dynamic libc_close close "libc.so"
 //go:cgo_import_dynamic libc_dup2 execve "libc.so"
 //go:cgo_import_dynamic libc_execve execve "libc.so"
+//go:cgo_import_static _cgo_libc_fork
 //go:cgo_import_dynamic libc_fcntl fcntl "libc.so"
 //go:cgo_import_dynamic libc_gethostname gethostname "libc.so"
 //go:cgo_import_dynamic libc_getpid getpid "libc.so"
@@ -29,6 +30,7 @@ import "unsafe"
 //go:linkname libc_dup2 libc_dup2
 //go:linkname libc_execve libc_execve
 //go:linkname libc_fcntl libc_fcntl
+//go:linkname libc_fork _cgo_libc_fork
 //go:linkname libc_gethostname libc_gethostname
 //go:linkname libc_getpid libc_getpid
 //go:linkname libc_ioctl libc_ioctl
@@ -57,6 +59,10 @@ var (
 	libc_setuid,
 	libc_setpgid,
 	libc_issetugid libcFunc
+)
+
+var (
+	libc_fork byte
 )
 
 // Many of these are exported via linkname to assembly in the syscall
@@ -174,7 +180,13 @@ func syscall_fcntl(fd, cmd, arg uintptr) (val, err uintptr) {
 //go:nosplit
 //go:linkname syscall_forkx
 func syscall_forkx(flags uintptr) (pid uintptr, err uintptr) {
-	panic("forkx TODO")
+	ret, errno := cgocaller0(unsafe.Pointer(&libc_fork));
+	if errno != 0 {
+		err = uintptr(errno)
+	} else {
+		pid = ret
+	}
+	return
 }
 
 //go:linkname syscall_gethostname
@@ -330,7 +342,13 @@ func syscall_syscall(trap, a1, a2, a3 uintptr) (r1, r2, err uintptr) {
 //go:linkname syscall_wait4
 //go:cgo_unsafe_args
 func syscall_wait4(pid uintptr, wstatus *uint32, options uintptr, rusage unsafe.Pointer) (wpid int, err uintptr) {
-	panic("wait4 TODO")
+	ret, errno := cgocaller3(unsafe.Pointer(&libc_waitpid), pid, uintptr(unsafe.Pointer(wstatus)), options);
+	if errno != 0 {
+		err = uintptr(errno)
+	} else {
+		wpid = int(ret)
+	}
+	return
 }
 
 //go:nosplit
