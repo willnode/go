@@ -27,6 +27,7 @@
 #include <sys/mman.h>
 #include <sys/epoll.h>
 #include <sys/wait.h>
+#include <sys/ioctl.h>
 
 #include "libcgo.h"
 
@@ -127,6 +128,13 @@ _cgo_libc_dup(argset_t* x) {
 }
 
 void
+_cgo_libc_dup2(argset_t* x) {
+	int oldfd = (int)x->args[0];
+	int newfd = (int)x->args[1];
+	SET_RETVAL(dup2(oldfd, newfd));
+}
+
+void
 _cgo_libc_fcntl(argset_t* x) {
 	int fd = (int)x->args[0];
 	int cmd = (int)x->args[1];
@@ -172,6 +180,14 @@ _cgo_libc_select(argset_t* x) {
 	fd_set* exceptfds = (fd_set*)x->args[3];
 	struct timeval* timeout = (struct timeval*)x->args[4];
 	SET_RETVAL(select(nfds, readfds, writefds, exceptfds, timeout));
+}
+
+void
+_cgo_libc_ioctl(argset_t* x) {
+	int fd = (int)x->args[0];
+	unsigned long request = (unsigned long)x->args[1];
+	uintptr_t argp = (uintptr_t)x->args[2]; // Variadic argument
+	SET_RETVAL(ioctl(fd, request, (void*)argp));
 }
 
 // --- Filesystem Operations ---
@@ -531,6 +547,13 @@ _cgo_libc_exit(argset_t* x) {
 	_exit(status);
 }
 
+void
+_cgo_libc_execve(argset_t* x) {
+	const char* pathname = (const char*)x->args[0];
+	char* const* argv = (char* const*)x->args[1];
+	char* const* envp = (char* const*)x->args[2];
+	SET_RETVAL(execve(pathname, argv, envp));
+}
 // --- Signal Handling ---
 
 void
@@ -897,6 +920,13 @@ void
 _cgo_libc_uname(argset_t* x) {
 	struct utsname* buf = (struct utsname*)x->args[0];
 	SET_RETVAL(uname(buf));
+}
+
+void
+_cgo_libc_gethostname(argset_t* x) {
+	char* name = (char*)x->args[0];
+	size_t len = (size_t)x->args[1];
+	SET_RETVAL(gethostname(name, len));
 }
 
 void

@@ -333,6 +333,11 @@ func syscall_setpgid(pid, pgid uintptr) (err uintptr) {
 	return call.err
 }
 
+//go:nosplit
+func issetugid() int32 {
+	return int32(sysvicall0(&libc_issetugid))
+}
+
 //go:linkname syscall_syscall
 //go:cgo_unsafe_args
 func syscall_syscall(trap, a1, a2, a3 uintptr) (r1, r2, err uintptr) {
