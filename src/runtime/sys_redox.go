@@ -5,9 +5,6 @@
 package runtime
 
 import (
-	"internal/abi"
-	"internal/runtime/atomic"
-	"internal/goarch"
 	"unsafe"
 )
 
@@ -131,10 +128,10 @@ var (
 )
 
 //go:nosplit
-func closefd(fd int32) int32 {
-	print("bout to run call libc_close\n")
-	return int32(sysvicall1(&libc_close, uintptr(fd)))
-}
+// func closefd(fd int32) int32 {
+// 	print("bout to run call libc_close\n")
+// 	return int32(sysvicall1(&libc_close, uintptr(fd)))
+// }
 
 //go:nosplit
 func exit(r int32) {
@@ -247,7 +244,7 @@ func raise(sig uint32) /* int32 */ {
 }
 
 func raiseproc(sig uint32) /* int32 */ {
-	pid := sysvicall0(&libc_getpid)
+	pid, _ := syscall_getpid()
 	print("bout to run call libc_kill\n")
 	sysvicall2(&libc_kill, pid, uintptr(sig))
 }
@@ -350,7 +347,11 @@ func pipe2(flags int32) (r, w int32, errno int32) {
 //go:nosplit
 func fcntl(fd, cmd, arg int32) (ret int32, errno int32) {
 	print("bout to run call libc_fcntl\n")
-	r1, err := sysvicall3Err(&libc_fcntl, uintptr(fd), uintptr(cmd), uintptr(arg))
-	print("done run call libc_fcntl\n")
-	return int32(r1), int32(err)
+	r0, err := syscall_fcntl(uintptr(fd), uintptr(cmd), uintptr(arg))
+	if err != 0 {
+		errno = int32(err)
+	} else {
+		ret = int32(r0)
+	}
+	return
 }

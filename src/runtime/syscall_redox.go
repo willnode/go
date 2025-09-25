@@ -6,41 +6,41 @@ package runtime
 
 import "unsafe"
 
-//go:cgo_import_dynamic libc_chdir chdir "libc.so"
-//go:cgo_import_dynamic libc_chroot chroot "libc.so"
-//go:cgo_import_dynamic libc_close close "libc.so"
-//go:cgo_import_dynamic libc_dup2 execve "libc.so"
-//go:cgo_import_dynamic libc_execve execve "libc.so"
+//go:cgo_import_static _cgo_libc_chdir
+//go:cgo_import_static _cgo_libc_chroot
+//go:cgo_import_static _cgo_libc_close
+//go:cgo_import_static _cgo_libc_dup2
+//go:cgo_import_static _cgo_libc_execve
 //go:cgo_import_static _cgo_libc_fork
-//go:cgo_import_dynamic libc_fcntl fcntl "libc.so"
-//go:cgo_import_dynamic libc_gethostname gethostname "libc.so"
-//go:cgo_import_dynamic libc_getpid getpid "libc.so"
-//go:cgo_import_dynamic libc_ioctl ioctl "libc.so"
-//go:cgo_import_dynamic libc_setgid setgid "libc.so"
-//go:cgo_import_dynamic libc_setgroups setgroups "libc.so"
-//go:cgo_import_dynamic libc_setrlimit setrlimit "libc.so"
-//go:cgo_import_dynamic libc_setsid setsid "libc.so"
-//go:cgo_import_dynamic libc_setuid setuid "libc.so"
-//go:cgo_import_dynamic libc_setpgid setpgid "libc.so"
-//go:cgo_import_dynamic libc_issetugid issetugid "libc.so"
+//go:cgo_import_static _cgo_libc_fcntl
+//go:cgo_import_static _cgo_libc_gethostname
+//go:cgo_import_static _cgo_libc_getpid
+//go:cgo_import_static _cgo_libc_ioctl
+//go:cgo_import_static _cgo_libc_setgid
+//go:cgo_import_static _cgo_libc_setgroups
+//go:cgo_import_static _cgo_libc_setrlimit
+//go:cgo_import_static _cgo_libc_setsid
+//go:cgo_import_static _cgo_libc_setuid
+//go:cgo_import_static _cgo_libc_setpgid
+//go:cgo_import_static _cgo_libc_issetugid
 
-//go:linkname libc_chdir libc_chdir
-//go:linkname libc_chroot libc_chroot
-//go:linkname libc_close libc_close
-//go:linkname libc_dup2 libc_dup2
-//go:linkname libc_execve libc_execve
-//go:linkname libc_fcntl libc_fcntl
+//go:linkname libc_chdir _cgo_libc_chdir
+//go:linkname libc_chroot _cgo_libc_chroot
+//go:linkname libc_close _cgo_libc_close
+//go:linkname libc_dup2 _cgo_libc_dup2
+//go:linkname libc_execve _cgo_libc_execve
+//go:linkname libc_fcntl _cgo_libc_fcntl
 //go:linkname libc_fork _cgo_libc_fork
-//go:linkname libc_gethostname libc_gethostname
-//go:linkname libc_getpid libc_getpid
-//go:linkname libc_ioctl libc_ioctl
-//go:linkname libc_setgid libc_setgid
-//go:linkname libc_setgroups libc_setgroups
-//go:linkname libc_setrlimit libc_setrlimit
-//go:linkname libc_setsid libc_setsid
-//go:linkname libc_setuid libc_setuid
-//go:linkname libc_setpgid libc_setpgid
-//go:linkname libc_issetugid libc_issetugid
+//go:linkname libc_gethostname _cgo_libc_gethostname
+//go:linkname libc_getpid _cgo_libc_getpid
+//go:linkname libc_ioctl _cgo_libc_ioctl
+//go:linkname libc_setgid _cgo_libc_setgid
+//go:linkname libc_setgroups _cgo_libc_setgroups
+//go:linkname libc_setrlimit _cgo_libc_setrlimit
+//go:linkname libc_setsid _cgo_libc_setsid
+//go:linkname libc_setuid _cgo_libc_setuid
+//go:linkname libc_setpgid _cgo_libc_setpgid
+//go:linkname libc_issetugid _cgo_libc_issetugid
 
 var (
 	libc_chdir,
@@ -48,6 +48,7 @@ var (
 	libc_close,
 	libc_dup2,
 	libc_execve,
+	libc_fork,
 	libc_fcntl,
 	libc_gethostname,
 	libc_getpid,
@@ -58,11 +59,7 @@ var (
 	libc_setsid,
 	libc_setuid,
 	libc_setpgid,
-	libc_issetugid libcFunc
-)
-
-var (
-	libc_fork byte
+	libc_issetugid byte
 )
 
 // Many of these are exported via linkname to assembly in the syscall
@@ -99,26 +96,16 @@ func syscall_rawsysvicall6(fn, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2, e
 //go:linkname syscall_chdir
 func syscall_chdir(path uintptr) (err uintptr) {
 	print("bout to asm call libc_chdir\n")
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_chdir)),
-		n:    1,
-		args: uintptr(unsafe.Pointer(&path)),
-	}
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	return call.err
+	_, errno := cgocaller1(unsafe.Pointer(&libc_chdir), path);
+	return uintptr(errno)
 }
 
 //go:nosplit
 //go:linkname syscall_chroot
 func syscall_chroot(path uintptr) (err uintptr) {
 	print("bout to asm call libc_chroot\n")
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_chroot)),
-		n:    1,
-		args: uintptr(unsafe.Pointer(&path)),
-	}
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	return call.err
+	_, errno := cgocaller1(unsafe.Pointer(&libc_chroot), path);
+	return uintptr(errno)
 }
 
 // like close, but must not split stack, for forkx.
@@ -126,19 +113,20 @@ func syscall_chroot(path uintptr) (err uintptr) {
 //go:nosplit
 //go:linkname syscall_close
 func syscall_close(fd int32) int32 {
-	return int32(sysvicall1(&libc_close, uintptr(fd)))
+	_, errno := cgocaller1(unsafe.Pointer(&libc_close), uintptr(fd));
+	return errno
 }
 
 //go:nosplit
 //go:linkname syscall_dup2
 func syscall_dup2(oldfd, newfd uintptr) (val, err uintptr) {
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_dup2)),
-		n:    3,
-		args: uintptr(unsafe.Pointer(&oldfd)),
+	ret, errno := cgocaller2(unsafe.Pointer(&libc_dup2), oldfd, newfd);
+	if errno != 0 {
+		err = uintptr(errno)
+	} else {
+		val = ret
 	}
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	return call.r1, call.err
+	return
 }
 
 //go:nosplit
@@ -146,13 +134,8 @@ func syscall_dup2(oldfd, newfd uintptr) (val, err uintptr) {
 //go:cgo_unsafe_args
 func syscall_execve(path, argv, envp uintptr) (err uintptr) {
 	print("bout to asm call libc_execve\n")
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_execve)),
-		n:    3,
-		args: uintptr(unsafe.Pointer(&path)),
-	}
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	return call.err
+	_, errno := cgocaller3(unsafe.Pointer(&libc_execve), path, argv, envp);
+	return uintptr(errno)
 }
 
 // like exit, but must not split stack, for forkx.
@@ -168,18 +151,18 @@ func syscall_exit(code uintptr) {
 //go:cgo_unsafe_args
 func syscall_fcntl(fd, cmd, arg uintptr) (val, err uintptr) {
 	print("bout to asm call libc_fcntl\n")
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_fcntl)),
-		n:    3,
-		args: uintptr(unsafe.Pointer(&fd)),
+	ret, errno := cgocaller3(unsafe.Pointer(&libc_fcntl), fd, cmd, arg);
+	if errno != 0 {
+		err = uintptr(errno)
+	} else {
+		val = ret
 	}
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	return call.r1, call.err
+	return
 }
 
 //go:nosplit
 //go:linkname syscall_forkx
-func syscall_forkx(flags uintptr) (pid uintptr, err uintptr) {
+func syscall_forkx(_flags uintptr) (pid uintptr, err uintptr) {
 	ret, errno := cgocaller0(unsafe.Pointer(&libc_fork));
 	if errno != 0 {
 		err = uintptr(errno)
@@ -192,18 +175,10 @@ func syscall_forkx(flags uintptr) (pid uintptr, err uintptr) {
 //go:linkname syscall_gethostname
 func syscall_gethostname() (name string, err uintptr) {
 	cname := new([_MAXHOSTNAMELEN]byte)
-	var args = [2]uintptr{uintptr(unsafe.Pointer(&cname[0])), _MAXHOSTNAMELEN}
 	print("bout to asm call libc_gethostname\n")
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_gethostname)),
-		n:    2,
-		args: uintptr(unsafe.Pointer(&args[0])),
-	}
-	entersyscallblock()
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	exitsyscall()
-	if call.r1 != 0 {
-		return "", call.err
+	_, errno := cgocaller2(unsafe.Pointer(&libc_gethostname), uintptr(unsafe.Pointer(&cname[0])), _MAXHOSTNAMELEN);
+	if errno != 0 {
+		return "", uintptr(errno)
 	}
 	cname[_MAXHOSTNAMELEN-1] = 0
 	return gostringnocopy(&cname[0]), 0
@@ -213,13 +188,8 @@ func syscall_gethostname() (name string, err uintptr) {
 //go:linkname syscall_getpid
 func syscall_getpid() (pid, err uintptr) {
 	print("bout to asm call libc_getpid\n")
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_getpid)),
-		n:    0,
-		args: uintptr(unsafe.Pointer(&libc_getpid)), // it's unused but must be non-nil, otherwise crashes
-	}
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	return call.r1, call.err
+	ret, errno := cgocaller0(unsafe.Pointer(&libc_getpid));
+	return ret, uintptr(errno)
 }
 
 //go:nosplit
@@ -227,13 +197,8 @@ func syscall_getpid() (pid, err uintptr) {
 //go:cgo_unsafe_args
 func syscall_ioctl(fd, req, arg uintptr) (err uintptr) {
 	print("bout to asm call libc_ioctl\n")
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_ioctl)),
-		n:    3,
-		args: uintptr(unsafe.Pointer(&fd)),
-	}
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	return call.err
+	_, errno := cgocaller3(unsafe.Pointer(&libc_ioctl), fd, req, arg);
+	return uintptr(errno)
 }
 
 // This is syscall.RawSyscall, it exists to satisfy some build dependency,
@@ -256,13 +221,8 @@ func syscall_rawsyscall6(trap, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2, err uint
 //go:linkname syscall_setgid
 func syscall_setgid(gid uintptr) (err uintptr) {
 	print("bout to asm call libc_setgid\n")
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_setgid)),
-		n:    1,
-		args: uintptr(unsafe.Pointer(&gid)),
-	}
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	return call.err
+	_, errno := cgocaller1(unsafe.Pointer(&libc_setgid), gid);
+	return uintptr(errno)
 }
 
 //go:nosplit
@@ -270,13 +230,14 @@ func syscall_setgid(gid uintptr) (err uintptr) {
 //go:cgo_unsafe_args
 func syscall_setgroups(ngid, gid uintptr) (err uintptr) {
 	print("bout to asm call libc_setgroups\n")
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_setgroups)),
-		n:    2,
-		args: uintptr(unsafe.Pointer(&ngid)),
-	}
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	return call.err
+	_, errno := cgocaller2(unsafe.Pointer(&libc_setgroups), ngid, gid);
+	return uintptr(errno)
+}
+
+
+func issetugid() int32 {
+	_, errno := cgocaller0(unsafe.Pointer(&libc_issetugid))
+	return errno
 }
 
 //go:nosplit
@@ -284,39 +245,24 @@ func syscall_setgroups(ngid, gid uintptr) (err uintptr) {
 //go:cgo_unsafe_args
 func syscall_setrlimit(which uintptr, lim unsafe.Pointer) (err uintptr) {
 	print("bout to asm call libc_setrlimit\n")
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_setrlimit)),
-		n:    2,
-		args: uintptr(unsafe.Pointer(&which)),
-	}
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	return call.err
+	_, errno := cgocaller2(unsafe.Pointer(&libc_setrlimit), which, uintptr(lim));
+	return uintptr(errno)
 }
 
 //go:nosplit
 //go:linkname syscall_setsid
 func syscall_setsid() (pid, err uintptr) {
 	print("bout to asm call libc_setsid\n")
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_setsid)),
-		n:    0,
-		args: uintptr(unsafe.Pointer(&libc_setsid)), // it's unused but must be non-nil, otherwise crashes
-	}
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	return call.r1, call.err
+	ret, errno := cgocaller0(unsafe.Pointer(&libc_setsid));
+	return ret, uintptr(errno)
 }
 
 //go:nosplit
 //go:linkname syscall_setuid
 func syscall_setuid(uid uintptr) (err uintptr) {
 	print("bout to asm call libc_setuid\n")
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_setuid)),
-		n:    1,
-		args: uintptr(unsafe.Pointer(&uid)),
-	}
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	return call.err
+	_, errno := cgocaller1(unsafe.Pointer(&libc_setuid), uid);
+	return uintptr(errno)
 }
 
 //go:nosplit
@@ -324,24 +270,14 @@ func syscall_setuid(uid uintptr) (err uintptr) {
 //go:cgo_unsafe_args
 func syscall_setpgid(pid, pgid uintptr) (err uintptr) {
 	print("bout to asm call libc_setpgid\n")
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_setpgid)),
-		n:    2,
-		args: uintptr(unsafe.Pointer(&pid)),
-	}
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	return call.err
-}
-
-//go:nosplit
-func issetugid() int32 {
-	return int32(sysvicall0(&libc_issetugid))
+	_, errno := cgocaller2(unsafe.Pointer(&libc_setpgid), pid, pgid);
+	return uintptr(errno)
 }
 
 //go:linkname syscall_syscall
 //go:cgo_unsafe_args
 func syscall_syscall(trap, a1, a2, a3 uintptr) (r1, r2, err uintptr) {
-	panic("syscall TODO")
+	panic("no syscall on Redox")
 }
 
 //go:linkname syscall_wait4
@@ -360,11 +296,11 @@ func syscall_wait4(pid uintptr, wstatus *uint32, options uintptr, rusage unsafe.
 //go:linkname syscall_write
 //go:cgo_unsafe_args
 func syscall_write(fd, buf, nbyte uintptr) (n, err uintptr) {
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_write)),
-		n:    3,
-		args: uintptr(unsafe.Pointer(&fd)),
+	ret, errno := cgocaller3(unsafe.Pointer(&libc_write), fd, buf, nbyte);
+	if errno != 0 {
+		err = uintptr(errno)
+	} else {
+		n = ret
 	}
-	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
-	return call.r1, call.err
+	return
 }

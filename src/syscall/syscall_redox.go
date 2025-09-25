@@ -81,6 +81,7 @@ func Pipe2(p []int, flags int) error {
 	if err == nil {
 		p[0] = int(pp[0])
 		p[1] = int(pp[1])
+		print("Pipe2: a ", p[0], " b ", p[1])
 	}
 	return err
 }
@@ -501,7 +502,7 @@ func Getexecname() (path string, err error) {
 }
 
 func readlen(fd int, buf *byte, nbuf int) (n int, err error) {
-	print("bout to sys call libc_read\n")
+	print("bout to sys call libc_read:", fd, "\n")
 	r0, _, e1 := syscgocall6(unsafe.Pointer(&libc_read), 3, uintptr(fd), uintptr(unsafe.Pointer(buf)), uintptr(nbuf), 0, 0, 0)
 	n = int(r0)
 	if e1 != 0 {

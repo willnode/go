@@ -5,6 +5,9 @@
 package runtime
 
 import (
+	"internal/abi"
+	"internal/runtime/atomic"
+	"internal/goarch"
 	"internal/runtime/sys"
 	"unsafe"
 )

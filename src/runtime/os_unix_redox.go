@@ -2,15 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build unix && !redox
-
 package runtime
 
 const (
 	// These values are the same on all known Unix systems.
 	// If we find a discrepancy some day, we can split them out.
 	_F_SETFD    = 2
-	_FD_CLOEXEC = 1
+	_FD_CLOEXEC = 0x01000000
 )
 
 //go:nosplit
