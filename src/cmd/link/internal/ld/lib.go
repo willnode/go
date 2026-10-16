@@ -843,7 +843,7 @@ func (ctxt *Link) linksetup() {
 	// Also leave it enabled on Solaris which doesn't support
 	// statically linked binaries.
 	if ctxt.BuildMode == BuildModeExe {
-		if havedynamic == 0 && ctxt.HeadType != objabi.Hdarwin && ctxt.HeadType != objabi.Hsolaris {
+		if havedynamic == 0 && ctxt.HeadType != objabi.Hdarwin && ctxt.HeadType != objabi.Hsolaris && ctxt.HeadType != objabi.Hredox {
 			*FlagD = true
 		}
 	}

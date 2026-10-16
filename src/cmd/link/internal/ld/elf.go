@@ -154,6 +154,7 @@ type ELFArch struct {
 	Netbsddynld    string
 	Openbsddynld   string
 	Dragonflydynld string
+	Redoxdynld     string
 	Solarisdynld   string
 
 	Reloc1    func(*Link, *OutBuf, *loader.Loader, loader.Sym, loader.ExtReloc, int, int64) bool
@@ -1859,6 +1860,9 @@ func asmbElf(ctxt *Link) {
 			case objabi.Hdragonfly:
 				interpreter = thearch.ELF.Dragonflydynld
 
+			case objabi.Hredox:
+				interpreter = thearch.ELF.Redoxdynld
+
 			case objabi.Hsolaris:
 				interpreter = thearch.ELF.Solarisdynld
 			}
@@ -2086,7 +2090,7 @@ func asmbElf(ctxt *Link) {
 		}
 	}
 
-	if ctxt.HeadType == objabi.Hlinux || ctxt.HeadType == objabi.Hfreebsd {
+	if ctxt.HeadType == objabi.Hlinux || ctxt.HeadType == objabi.Hfreebsd || ctxt.HeadType == objabi.Hredox {
 		ph := newElfPhdr()
 		ph.Type = elf.PT_GNU_STACK
 		ph.Flags = elf.PF_W + elf.PF_R

@@ -161,6 +161,11 @@ func (t *Target) IsAIX() bool {
 	return t.HeadType == objabi.Haix
 }
 
+func (t *Target) IsRedox() bool {
+	t.mustSetHeadType()
+	return t.HeadType == objabi.Hredox
+}
+
 func (t *Target) IsSolaris() bool {
 	t.mustSetHeadType()
 	return t.HeadType == objabi.Hsolaris
@@ -198,7 +203,7 @@ func (t *Target) IsBigEndian() bool {
 func (t *Target) UsesLibc() bool {
 	t.mustSetHeadType()
 	switch t.HeadType {
-	case objabi.Haix, objabi.Hdarwin, objabi.Hopenbsd, objabi.Hsolaris, objabi.Hwindows:
+	case objabi.Haix, objabi.Hdarwin, objabi.Hopenbsd, objabi.Hredox, objabi.Hsolaris, objabi.Hwindows:
 		// platforms where we use libc for syscalls.
 		return true
 	}

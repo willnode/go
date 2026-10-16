@@ -68,6 +68,7 @@ func Init() (*sys.Arch, ld.Arch) {
 			Openbsddynld:   "/usr/libexec/ld.so",
 			Netbsddynld:    "/libexec/ld.elf_so",
 			Dragonflydynld: "/usr/libexec/ld-elf.so.2",
+			Redoxdynld:     "/usr/lib/ld64.so.1",
 			Solarisdynld:   "/lib/amd64/ld.so.1",
 
 			Reloc1:    elfreloc1,
@@ -107,6 +108,7 @@ func archinit(ctxt *ld.Link) {
 		objabi.Hnetbsd,    /* netbsd */
 		objabi.Hopenbsd,   /* openbsd */
 		objabi.Hdragonfly, /* dragonfly */
+		objabi.Hredox,     /* redox */
 		objabi.Hsolaris:   /* solaris */
 		ld.Elfinit(ctxt)
 
