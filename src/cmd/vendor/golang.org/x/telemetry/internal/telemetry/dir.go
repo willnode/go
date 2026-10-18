@@ -157,6 +157,7 @@ const DisabledOnPlatform = false ||
 	runtime.GOOS == "android" || // #60967
 	runtime.GOOS == "illumos" || // #65544
 	// These platforms fundamentally can't be supported:
+	runtime.GOOS == "redox" || // not yet
 	runtime.GOOS == "js" || // #60971
 	runtime.GOOS == "wasip1" || // #60971
 	runtime.GOOS == "plan9" || // https://github.com/golang/go/issues/57540#issuecomment-1470766639

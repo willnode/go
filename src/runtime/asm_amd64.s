@@ -230,6 +230,10 @@ needtls:
 	// skip TLS setup on OpenBSD
 	JMP ok
 #endif
+#ifdef GOOS_redox
+	// skip TLS setup on Redox
+	JMP ok
+#endif
 #ifdef GOOS_windows
 	// The Windows loader has already set up TLS.
 	JMP ok
