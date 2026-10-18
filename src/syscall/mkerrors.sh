@@ -18,7 +18,7 @@ if [[ "$GOOS" -eq "solaris" ]]; then
 	export PATH=/usr/gnu/bin:$PATH
 fi
 
-uname=$(uname)
+uname=Redox
 
 includes_AIX='
 #include <net/if.h>
@@ -211,6 +211,19 @@ includes_OpenBSD='
 #define WALTSIG			0x4
 '
 
+includes_Redox='
+#include <limits.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/mman.h>
+#include <sys/wait.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <termios.h>
+#include <netinet/ip.h>
+'
+
 includes_SunOS='
 #include <limits.h>
 #include <sys/types.h>
@@ -238,10 +251,8 @@ includes='
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <netinet/ip6.h>
 #include <netinet/tcp.h>
 #include <errno.h>
-#include <sys/signal.h>
 #include <signal.h>
 #include <sys/resource.h>
 '
@@ -253,7 +264,7 @@ ccflags="$@"
 	echo package syscall
 	echo
 	echo '/*'
-	indirect="includes_$(uname)"
+	indirect="includes_${uname}"
 	echo "${!indirect} $includes"
 	echo '*/'
 	echo 'import "C"'
@@ -459,4 +470,5 @@ main(void)
 '
 ) >_errors.c
 
-$CC $ccflags -o _errors _errors.c && $GORUN ./_errors && rm -f _errors.c _errors _const.go _error.grep _signal.grep _error.out
+gcc $ccflags -o _errors _errors.c && $GORUN ./_errors
+rm -f _errors.c _errors _const.go _error.grep _signal.grep _error.out

@@ -408,6 +408,10 @@ func parseRuntimeDebugVars(godebug string) {
 		// Hence, default to MADV_DONTNEED.
 		debug.madvdontneed = 1
 	}
+	if GOOS == "redox" {
+		// Stack fault otherwise in redox
+		debug.asyncpreemptoff = 1
+	}
 	debug.traceadvanceperiod = defaultTraceAdvancePeriod
 
 	// apply runtime defaults, if any

@@ -1118,7 +1118,7 @@ func (mp *m) hasCgoOnStack() bool {
 const (
 	// osHasLowResTimer indicates that the platform's internal timer system has a low resolution,
 	// typically on the order of 1 ms or more.
-	osHasLowResTimer = GOOS == "windows" || GOOS == "openbsd" || GOOS == "netbsd" || GOOS == "plan9"
+	osHasLowResTimer = GOOS == "windows" || GOOS == "openbsd" || GOOS == "netbsd" || GOOS == "plan9" || GOOS == "redox"
 
 	// osHasLowResClockInt is osHasLowResClock but in integer form, so it can be used to create
 	// constants conditionally.
@@ -1843,7 +1843,7 @@ func startTheWorldWithSema(now int64, w worldStop) int64 {
 // via libcall.
 func usesLibcall() bool {
 	switch GOOS {
-	case "aix", "darwin", "illumos", "ios", "openbsd", "solaris", "windows":
+	case "aix", "darwin", "illumos", "ios", "openbsd", "redox", "solaris", "windows":
 		return true
 	}
 	return false
@@ -1853,7 +1853,7 @@ func usesLibcall() bool {
 // system-allocated stack.
 func mStackIsSystemAllocated() bool {
 	switch GOOS {
-	case "aix", "darwin", "plan9", "illumos", "ios", "openbsd", "solaris", "windows":
+	case "aix", "darwin", "plan9", "illumos", "ios", "openbsd", "redox", "solaris", "windows":
 		return true
 	}
 	return false

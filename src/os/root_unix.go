@@ -115,7 +115,7 @@ func rootOpenDir(parent int, name string) (int, error) {
 		err error
 	)
 	ignoringEINTR(func() error {
-		fd, err = unix.Openat(parent, name, syscall.O_NOFOLLOW|syscall.O_CLOEXEC|syscall.O_DIRECTORY, 0)
+		fd, err = unix.Openat(parent, name, O_RDONLY|syscall.O_NOFOLLOW|syscall.O_CLOEXEC|syscall.O_DIRECTORY, 0)
 		if isNoFollowErr(err) || err == syscall.ENOTDIR {
 			err = checkSymlink(parent, name, err)
 		} else if err == syscall.ENOTSUP || err == syscall.EOPNOTSUPP {

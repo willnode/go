@@ -405,7 +405,7 @@ esac
 	if [ -n "$mktypes" ]; then
 		# ztypes_$GOOSARCH.go could be erased before "go run mkpost.go" is called.
 		# Therefore, "go run" tries to recompile syscall package but ztypes is empty and it fails.
-		echo "$mktypes types_$GOOS.go |go run mkpost.go >ztypes_$GOOSARCH.go.NEW && mv ztypes_$GOOSARCH.go.NEW ztypes_$GOOSARCH.go";
+		echo "unset GOOS; $mktypes types_$GOOS.go |go run mkpost.go >ztypes_$GOOSARCH.go.NEW && mv ztypes_$GOOSARCH.go.NEW ztypes_$GOOSARCH.go";
 	fi
 	if [ -n "$mkasm" ]; then echo "$mkasm $GOOS $GOARCH"; fi
 ) | $run

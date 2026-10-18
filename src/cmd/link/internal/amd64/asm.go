@@ -291,33 +291,45 @@ func adddynrel(target *ld.Target, ldr *loader.Loader, syms *ld.ArchSyms, s loade
 		return true
 
 	case objabi.R_PCREL:
-		if targType == sym.SDYNIMPORT && ldr.SymType(s).IsText() && target.IsDarwin() {
-			// Loading the address of a dynamic symbol. Rewrite to use GOT.
-			// turn LEAQ symbol address to MOVQ of GOT entry
-			if r.Add() != 0 {
-				ldr.Errorf(s, "unexpected nonzero addend for dynamic symbol %s", ldr.SymName(targ))
-				return false
-			}
-			su := ldr.MakeSymbolUpdater(s)
-			if r.Off() >= 2 && su.Data()[r.Off()-2] == 0x8d {
-				su.MakeWritable()
-				su.Data()[r.Off()-2] = 0x8b
-				if target.IsInternal() {
-					ld.AddGotSym(target, ldr, syms, targ, 0)
-					su.SetRelocSym(rIdx, syms.GOT)
-					su.SetRelocAdd(rIdx, int64(ldr.SymGot(targ)))
-				} else {
-					su.SetRelocType(rIdx, objabi.R_GOTPCREL)
+		if targType == sym.SDYNIMPORT && ldr.SymType(s).IsText() {
+			if target.IsDarwin() {
+				// Loading the address of a dynamic symbol. Rewrite to use GOT.
+				// turn LEAQ symbol address to MOVQ of GOT entry
+				if r.Add() != 0 {
+					ldr.Errorf(s, "unexpected nonzero addend for dynamic symbol %s", ldr.SymName(targ))
+					return false
 				}
+				su := ldr.MakeSymbolUpdater(s)
+				if r.Off() >= 2 && su.Data()[r.Off()-2] == 0x8d {
+					su.MakeWritable()
+					su.Data()[r.Off()-2] = 0x8b
+					if target.IsInternal() {
+						ld.AddGotSym(target, ldr, syms, targ, 0)
+						su.SetRelocSym(rIdx, syms.GOT)
+						su.SetRelocAdd(rIdx, int64(ldr.SymGot(targ)))
+					} else {
+						su.SetRelocType(rIdx, objabi.R_GOTPCREL)
+					}
+					return true
+				}
+				ldr.Errorf(s, "unexpected R_PCREL reloc for dynamic symbol %s: not preceded by LEAQ instruction", ldr.SymName(targ))
+			}
+			// TODO: in redox this works, but need more research if this is correct
+			if target.IsRedox() {
+				addpltsym(target, ldr, syms, targ)
+				su := ldr.MakeSymbolUpdater(s)
+				su.SetRelocSym(rIdx, syms.PLT)
+				su.SetRelocAdd(rIdx, r.Add()+int64(ldr.SymPlt(targ)))
 				return true
 			}
-			ldr.Errorf(s, "unexpected R_PCREL reloc for dynamic symbol %s: not preceded by LEAQ instruction", ldr.SymName(targ))
-		}
+			
+	}
 
 	case objabi.R_ADDR:
 		if ldr.SymType(s).IsText() && target.IsElf() {
 			su := ldr.MakeSymbolUpdater(s)
-			if target.IsSolaris() {
+			// TODO: in redox this works, but need more research if this is correct
+			if target.IsSolaris() || target.IsRedox() {
 				addpltsym(target, ldr, syms, targ)
 				su.SetRelocSym(rIdx, syms.PLT)
 				su.SetRelocAdd(rIdx, r.Add()+int64(ldr.SymPlt(targ)))
