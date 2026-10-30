@@ -3,7 +3,7 @@
 # You must have "$ARCH-unknown-redox-gcc" in your PATH, add it from Redox build system
 # mkerrors: You need to patch "$CC" to "gcc" at the bottom of the script, also "$(uname)" to "Redox"
 # mkerrors: You need to comment out "#include <netinet/ip6.h>" and "#include <sys/signal.h>" since Redox doesn't have it
-
+export PATH="$HOME/.local/go/bin:$PATH"
 ARCH=x86_64 GOARCH=amd64 GOOS=redox # intentionally not exported
 export redox_sysroot="$HOME/redox/prefix/$ARCH-unknown-redox/sysroot/$ARCH-unknown-redox"
 export CGO_FLAGS="--sysroot=${redox_sysroot}" \

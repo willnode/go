@@ -66,6 +66,7 @@ const (
 	ECHOK				= 0x4
 	ECHONL				= 0x10
 	FD_CLOEXEC			= 0x1000000
+	FD_SETSIZE			= 0x400
 	F_DUPFD				= 0x0
 	F_DUPFD_CLOEXEC			= 0x406
 	F_GETFD				= 0x1

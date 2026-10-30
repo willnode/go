@@ -467,6 +467,8 @@ func sendmsgN(fd int, iov []Iovec, oob []byte, ptr unsafe.Pointer, salen _Sockle
 //sysnb	Getrusage(who int, rusage *Rusage) (err error)
 //sysnb	Gettimeofday(tv *Timeval) (err error)
 //sysnb	Getuid() (uid int)
+//sys   ioctl(fd int, req int, arg uintptr) (err error)
+//sys   ioctlPtr(fd int, req int, arg unsafe.Pointer) (err error)
 //sys	Kill(pid int, signum Signal) (err error)
 //sys	Lchown(path string, uid int, gid int) (err error)
 //sys	Link(path string, link string) (err error)

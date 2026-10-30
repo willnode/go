@@ -216,6 +216,7 @@ includes_Redox='
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/mman.h>
+#include <sys/select.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <net/if.h>

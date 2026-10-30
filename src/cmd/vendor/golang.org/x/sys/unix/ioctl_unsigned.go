@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build darwin || dragonfly || freebsd || hurd || linux || netbsd || openbsd
+//go:build darwin || dragonfly || freebsd || hurd || linux || netbsd || openbsd || redox
 
 package unix
 
@@ -71,4 +71,9 @@ func IoctlGetTermios(fd int, req uint) (*Termios, error) {
 	var value Termios
 	err := ioctlPtr(fd, req, unsafe.Pointer(&value))
 	return &value, err
+}
+
+// redox: exposed until we have better solution
+func Ioctl(fd int, req uint, arg uintptr) error {
+	return ioctl(fd, req, arg)
 }

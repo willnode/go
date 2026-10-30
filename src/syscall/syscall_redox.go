@@ -42,20 +42,52 @@ const (
 )
 
 func accept4(s int, rsa *RawSockaddrAny, addrlen *_Socklen, flags int) (fd int, err error) {
-	// not implemented
-	return 0, ENOSYS
+	// worked around
+	fd, err = accept(s, rsa, addrlen)
+	if err != nil {
+		return -1, err
+	}
+
+	if flags == 0 {
+		return fd, nil
+	}
+
+	if flags & SOCK_CLOEXEC != 0 {
+		CloseOnExec(fd)
+	}
+
+	if flags & SOCK_NONBLOCK != 0 {
+		err = SetNonblock(fd, true)
+		if err != nil {
+			Close(fd)
+			return -1, err
+		}
+	}
+
+	return fd, nil
 }
 
 func sendfile(outfd int, infd int, offset *int64, count int) (written int, err error) {
 	// not implemented
 	return 0, ENOSYS
 }
+func Syscall(trap, a1, a2, a3 uintptr) (r1, r2 uintptr, err Errno) {
+	// stubbed out
+	return 0, 0, ENOSYS
+}
+func Syscall6(trap, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errno) {
+	// stubbed out
+	return 0, 0, ENOSYS
+}
+func RawSyscall(trap, a1, a2, a3 uintptr) (r1, r2 uintptr, err Errno) {
+	// stubbed out
+	return 0, 0, ENOSYS
+}
+func RawSyscall6(trap, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errno) {
+	// stubbed out
+	return 0, 0, ENOSYS
+}
 
-// Implemented in asm_redox_amd64.s
-func Syscall(trap, a1, a2, a3 uintptr) (r1, r2 uintptr, err Errno)
-func Syscall6(trap, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errno)
-func RawSyscall(trap, a1, a2, a3 uintptr) (r1, r2 uintptr, err Errno)
-func RawSyscall6(trap, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errno)
 
 //go:linkname rawSysvicall6
 func rawSysvicall6(trap, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errno)
@@ -535,6 +567,8 @@ func sendmsgN(fd int, p, oob []byte, ptr unsafe.Pointer, salen _Socklen, flags i
 //sysnb	Getpid() (pid int)
 //sys	Geteuid() (euid int)
 //sys	Getegid() (egid int)
+//sys	Getpgid(pid int) (pgid int, err error)
+//sys	Getpgrp() (pgrp int)
 //sys	Getppid() (ppid int)
 //sys	Getpriority(which int, who int) (n int, err error)
 //sysnb	Getrlimit(which int, lim *Rlimit) (err error)

@@ -332,6 +332,7 @@ func syscall_syscall(trap, a1, a2, a3 uintptr) (r1, r2, err uintptr) {
 	return call.r1, call.r2, call.err
 }
 
+//go:nosplit
 //go:linkname syscall_wait4
 //go:cgo_unsafe_args
 func syscall_wait4(pid uintptr, wstatus *uint32, options uintptr, rusage unsafe.Pointer) (wpid int, err uintptr) {

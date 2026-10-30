@@ -158,3 +158,5 @@ const (
 // Terminal handling
 
 type Termios C.struct_termios
+
+type Winsize C.struct_winsize

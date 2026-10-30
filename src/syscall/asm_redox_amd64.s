@@ -48,12 +48,6 @@ TEXT ·getpid(SB),NOSPLIT,$0
 TEXT ·ioctl(SB),NOSPLIT,$0
 	JMP	runtime·syscall_ioctl(SB)
 
-TEXT ·RawSyscall(SB),NOSPLIT,$0
-	JMP	runtime·syscall_rawsyscall(SB)
-
-TEXT ·RawSyscall6(SB),NOSPLIT,$0
-	JMP	runtime·syscall_rawsyscall6(SB)
-
 TEXT ·setgid(SB),NOSPLIT,$0
 	JMP	runtime·syscall_setgid(SB)
 
@@ -71,9 +65,6 @@ TEXT ·setuid(SB),NOSPLIT,$0
 
 TEXT ·setpgid(SB),NOSPLIT,$0
 	JMP	runtime·syscall_setpgid(SB)
-
-TEXT ·Syscall(SB),NOSPLIT,$0
-	JMP	runtime·syscall_syscall(SB)
 
 TEXT ·wait4(SB),NOSPLIT,$0
 	JMP	runtime·syscall_wait4(SB)

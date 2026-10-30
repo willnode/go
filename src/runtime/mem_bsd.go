@@ -19,6 +19,8 @@ func sysAllocOS(n uintptr, _ string) unsafe.Pointer {
 	if err != 0 {
 		return nil
 	}
+	// redox: it is not zeroed
+	memclrNoHeapPointers(v, n)
 	return v
 }
 

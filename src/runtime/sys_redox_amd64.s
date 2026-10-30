@@ -13,32 +13,6 @@
 TEXT runtime·settls(SB),NOSPLIT,$8
 	RET
 
-// rawSyscall6 invokes the Redox kernel directly, only used for futex
-//
-// func rawSyscall6(nr, a1, a2, a3, a4, a5, a6 uintptr) (r1, errno uintptr)
-TEXT runtime·rawSyscall6(SB),NOSPLIT,$0-72
-	MOVQ	nr+0(FP), AX
-	MOVQ	a1+8(FP), DI
-	MOVQ	a2+16(FP), SI
-	MOVQ	a3+24(FP), DX
-	MOVQ	a4+32(FP), R10
-	MOVQ	a5+40(FP), R8
-	MOVQ	a6+48(FP), R9
-	SYSCALL
-	CMPQ	AX, $0xfffffffffffff001
-	JLS	ok
-	// return as (0, errno).
-	NEGQ	AX
-	MOVQ	$0, r1+56(FP)
-	MOVQ	AX, errno+64(FP)
-	RET
-ok:
-	MOVQ	AX, r1+56(FP)
-	MOVQ	$0, errno+64(FP)
-	RET
-
-// the rest is similar to solaris
-
 // void libc_miniterrno(void *(*___errno)(void));
 //
 // Set the TLS errno pointer in M.

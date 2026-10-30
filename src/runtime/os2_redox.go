@@ -54,8 +54,8 @@ import (
 //go:cgo_import_dynamic libc_usleep usleep "libc.so.6"
 //go:cgo_import_dynamic libc_write write "libc.so.6"
 //go:cgo_import_dynamic libc_pipe2 pipe2 "libc.so.6"
-//go:cgo_import_dynamic libc_redox_cur_procfd_v0 redox_cur_procfd_v0 "libc.so.6"
-//go:cgo_import_dynamic libc_redox_sys_call_v0 redox_sys_call_v0 "libc.so.6"
+//go:cgo_import_dynamic libc_redox_futex_wait_v0 redox_futex_wait_v0 "libc.so.6"
+//go:cgo_import_dynamic libc_redox_futex_wake_v0 redox_futex_wake_v0 "libc.so.6"
 
 //go:linkname libc_relibc_start_v1 libc_relibc_start_v1
 //go:linkname libc_getrandom libc_getrandom
@@ -93,8 +93,8 @@ import (
 //go:linkname libc_usleep libc_usleep
 //go:linkname libc_write libc_write
 //go:linkname libc_pipe2 libc_pipe2
-//go:linkname libc_redox_cur_procfd_v0 libc_redox_cur_procfd_v0
-//go:linkname libc_redox_sys_call_v0 libc_redox_sys_call_v0
+//go:linkname libc_redox_futex_wait_v0 libc_redox_futex_wait_v0
+//go:linkname libc_redox_futex_wake_v0 libc_redox_futex_wake_v0
 
 var (
 	libc_relibc_start_v1,
@@ -133,12 +133,29 @@ var (
 	libc_usleep,
 	libc_write,
 	libc_pipe2,
-	libc_redox_cur_procfd_v0,
-	libc_redox_sys_call_v0 libcFunc
+	libc_redox_futex_wait_v0,
+	libc_redox_futex_wake_v0 libcFunc
 )
 
 var sigset_all = ^sigset(0)
 
+//go:nosplit
+func futexsleep(addr *uint32, val uint32, ns int64) {
+	var tsPtr uintptr
+	if ns >= 0 {
+		var ts timespec
+		ts.tv_sec = ns / 1000000000
+		ts.tv_nsec = int64(ns % 1000000000)
+		tsPtr = uintptr(unsafe.Pointer(&ts))
+	}
+
+	sysvicall6(&libc_redox_futex_wait_v0, uintptr(unsafe.Pointer(addr)), uintptr(val), tsPtr, 0, 0, 0)
+}
+
+//go:nosplit
+func futexwakeup(addr *uint32, cnt uint32) {
+	sysvicall6(&libc_redox_futex_wake_v0, uintptr(unsafe.Pointer(addr)), uintptr(cnt), 0, 0, 0, 0)
+}
 
 func getCPUCount() int32 {
 	n := int32(sysconf(_SC_NPROCESSORS_ONLN))

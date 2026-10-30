@@ -2530,6 +2530,7 @@ func ldobj(ctxt *Link, f *bio.Reader, lib *sym.Library, length int64, pn string,
 	}
 
 	if c1 != 'g' || c2 != 'o' || c3 != ' ' || c4 != 'o' {
+		fmt.Printf("DEBUG: unknown format in file=%s package=%s\n", file, pn)
 		// An unrecognized object is just passed to the external linker.
 		// If we try to read symbols from this object, we will
 		// report an error at that time.

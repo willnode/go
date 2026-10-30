@@ -73,6 +73,7 @@ const (
 	ECHOK				= 0x4
 	ECHONL				= 0x10
 	FD_CLOEXEC			= 0x1000000
+	FD_SETSIZE			= 0x400
 	F_DUPFD				= 0x0
 	F_DUPFD_CLOEXEC			= 0x406
 	F_GETFD				= 0x1
@@ -203,6 +204,7 @@ const (
 	MS_INVALIDATE			= 0x2
 	MS_SYNC				= 0x4
 	NAME_MAX			= 0xff
+	NFDBITS				= 0x40
 	NOFLSH				= 0x80000000
 	OCRNL				= 0x8
 	OFDEL				= 0x80
